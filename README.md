@@ -222,11 +222,15 @@ Kyoto Tycoon supports database cursors. With these, an application can traverse,
 Iterating over records in a database is simple. In this example, the print_record function instructs the Kyoto Tycoon server to retrieve a record's key and value, and then automatically step the cursor to an adjacent record.
 
         print_database(Cursor) ->
-            {ok, Res} = kterl:cur_get(Cursor, true),
-            Key = kterl_result:get_key(Res),
-            Value = kterl_result:get_value(Res),
-            io:format("~p ~p~n",[Key, Value]),
-            print_database(Cursor).
+            case kterl:cur_get(Cursor, true) of
+                {ok, Res} ->
+                    Key = kterl_result:get_key(Res),
+                    Value = kterl_result:get_value(Res),
+                    io:format("~p ~p~n",[Key, Value]),
+                    print_database(Cursor);
+                {error, invalid_cursor} ->
+                    ok
+            end.
 
         print_forward(Cursor) ->
             ok = kterl:cur_jump(Cursor),
