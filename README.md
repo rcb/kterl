@@ -14,9 +14,9 @@ Features:
 
 Retrieve and build kterl:
 
-        git clone git://github.com/richbeerman/kterl.git
+        git clone git://github.com/rcb/kterl.git
         cd kterl
-        make
+        make && make docs
         erl -pa ebin/
 
 Download and install kyoto tycoon onto your machine, and start it with
