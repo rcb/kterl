@@ -1,0 +1,11 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc Calls /rpc/void<p/>
+Pings the server.
+```
+% example:
+
+is_kt_connected(Pid) ->
+    ok == kterl:void(Pid).
+'''
+
+<p/>On success void/1 returns <code>'ok'</code>.<p/>

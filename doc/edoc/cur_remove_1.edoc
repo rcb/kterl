@@ -1,0 +1,34 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc
+Calls /rpc/cur_remove<p/>
+
+Removes the current record located at the cursor. The cursor is then
+positioned to the next or previous record in the database, depending
+on if the cursor was positioned with cur_step* or cur_step_back*
+functions. 
+
+<p/>
+
+If the last (or first) record in the database is removed or seized,
+the cursor is invalidated for future operations until it's
+repositioned with a jump call.
+
+```
+% example:
+
+1> kterl:set_bulk(Pid,[{"key1","val1"},{"key2","val2"},{"key3","val3"}]).
+...
+2> Cursor = kterl:cursor(Pid).
+...
+3> ok = kterl:cur_jump(Cursor, [{key, "key2"}]).
+ok
+4> ok = kterl:cur_remove(Cursor),
+ok
+5> kterl_result:get_key(kterl:cur_get(Cursor)).
+<<"key3">>
+'''
+
+<p/>On success cur_remove/1 returns <code>'ok'</code>.<p/>
+@see cursor/1
+@see cur_remove/2
+

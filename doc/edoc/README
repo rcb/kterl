@@ -1,0 +1,3 @@
+-- please notice --
+do not edit these .edoc files directly. instead, make changes to the
+skel/func_docs.skel file. then, run make docs to regenerate the edocs.

@@ -1,0 +1,21 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc Calls /rpc/report<p/>
+Returns a set of key,value pairs containing server information.
+```
+
+1> {ok, Res} = kterl:report(Pid).
+...
+2> kterl_result:get_records(Res).
+[{<<"cnt_get">>,<<"13">>},
+ {<<"cnt_get_misses">>,<<"4">>},
+ {<<"cnt_misc">>,<<"0">>},
+ {<<"cnt_remove">>,<<"0">>},
+ {<<"cnt_remove_misses">>,<<"0">>},
+ ... ]
+'''
+
+<p/>On success report/1 will return <code>{ok, Result}</code>. The <code>Result</code> can then be passed to the following function(s) to access:<p/>```
+kterl_result:get_records(Result).         % All records.
+kterl_result:get_num(Result).             % The result from an increment call, or a record count.
+
+'''

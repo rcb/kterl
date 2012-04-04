@@ -1,0 +1,31 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc
+
+Calls /rpc/set_bulk<p/>
+
+Stores multiple records to the primary database at once, returning the
+number of records stored.  {@link bin_set_bulk/2} is significantly faster than
+this call.
+
+```
+% example:
+
+1> Records = [{"key1","val1"}, {<<"key2">>, <<"val2">>}, {"key3", 1234}, {"key4",1.23}].
+...
+2> {ok, Res} = kterl:set_bulk(Pid, Records).
+...
+3> kterl_result:get_num(Res).
+4
+...
+4> kterl_result:get_records(kterl:get_bulk(Pid, [Key || {Key,_} <- Records])).
+[{<<"key1">>,<<"val1">>},
+ {<<"key2">>,<<"val2">>},
+ {<<"key3">>,<<"1234">>},
+ {<<"key4">>,<<"1.230000">>}]
+'''
+<p/>On success set_bulk/2 will return <code>{ok, Result}</code>. The <code>Result</code> can then be passed to the following function(s) to access:<p/>```
+kterl_result:get_num(Result).             % The result from an increment call, or a record count.
+
+'''
+@see set_bulk/3
+@see bin_set_bulk/2

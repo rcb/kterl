@@ -1,0 +1,17 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc
+Calls /rpc/cur_get_key<p/>
+
+Retrieves the key of the record located at the cursor. If step is
+true, the server will reposition the cursor to an adjacent record
+after the key is retrieved. This function can also interact with the
+server's wait/signal mechanism.
+
+<p/>On success cur_get_key/3 will return <code>{ok, Result}</code>. The <code>Result</code> can then be passed to the following function(s) to access:<p/>```
+kterl_result:get_key(Result).             % The record's key.
+kterl_result:get_signaled_count(Result).  % The number of clients signaled (if 'signal' was passed to the call.)
+
+'''
+@see cursor/1
+@see cur_get_key/1
+@see cur_get_key/2

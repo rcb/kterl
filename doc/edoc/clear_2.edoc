@@ -1,0 +1,20 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc Calls /rpc/clear<p/>
+Removes all records from a specified database.
+```
+% example:
+
+clear_kt_database(Pid, Database) ->
+    ok = kterl:clear(Pid, [{database, Database}]).
+
+2> clear_kt_database(Pid, 1).
+ok
+3> clear_kt_database(Pid, "database.kct").
+ok
+'''
+<p/>On success clear/2 will return <code>{ok, Result}</code>. The <code>Result</code> can then be passed to the following function(s) to access:<p/>```
+kterl_result:get_signaled_count(Result).  % The number of clients signaled (if 'signal' was passed to the call.)
+
+'''
+@see clear/1
+

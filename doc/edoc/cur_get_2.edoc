@@ -1,0 +1,47 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc
+Calls /rpc/cur_get<p/>
+
+Retrieves the key and value, and if set, the expiration time of the
+record located at the cursor. If 'step' is set to true, the server
+will reposition the cursor to an adjacent record after the key and
+value are retrieved.
+
+```
+% example:
+
+1> ok = kterl:clear(Pid).
+ok
+2> kterl:set_bulk(Pid,[{"key1","val1"},{"key2","val2"},{"key3","val3"}]).
+...
+3> Cursor = kterl:cursor(Pid).
+...
+4> ok = kterl:cur_jump(Cursor, [{key,"key2"}]).
+ok
+5> {ok, Res} = kterl:cur_get(Cursor, true).
+...
+6> kterl_result:get_key(Res).
+<<"key2">>
+7> kterl_result:get_value(Res).
+<<"val2">>
+8> {ok, Res1} = kterl:cur_get(Cursor, true).
+...
+9> kterl_result:get_key(Res1).
+<<"key3">>
+10> kterl_result:get_value(Res1).
+<<"val3">>
+11> {error,invalid_cursor} = kterl:cur_get(Cursor, true).
+{error,invalid_cursor}
+'''
+
+<p/>On success cur_get/2 will return <code>{ok, Result}</code>. The <code>Result</code> can then be passed to the following function(s) to access:<p/>```
+kterl_result:get_value(Result).           % The record's value.
+kterl_result:get_key(Result).             % The record's key.
+kterl_result:get_exptime(Result).         % The record's expiration time (if set.)
+
+'''
+@see cursor/1
+@see cur_get/1
+@see cur_get/3
+
+

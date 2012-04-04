@@ -1,0 +1,22 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc
+Calls /rpc/remove<p/>
+
+Removes a record from the primary database.
+```
+% example:
+
+1> ok = kterl:set(Pid, "test", "record").
+ok
+2> kterl_result:get_value(kterl:get(Pid, <<"test">>)).
+<<"record">>
+3> ok = kterl:remove("test").
+ok
+4> kterl:get(Pid,"test").
+{error,no_record}
+'''
+See the cas() function to perform an atomic value compare-and-remove operation.
+<p/>On success remove/2 returns <code>'ok'</code>.<p/>
+@see remove/3
+@see cas/3
+

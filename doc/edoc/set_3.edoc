@@ -1,0 +1,14 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc
+Calls /rpc/set<p/>
+Sets the value of a record in the primary database. A new record is created if the key doesn't exist.
+```
+% example:
+
+update_user_record(Pid, Key, Value) ->
+    ok = kterl:set(Pid, Key, Value).
+'''
+<p/>On success set/3 returns <code>'ok'</code>.<p/>
+@see set/2
+
+

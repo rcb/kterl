@@ -1,0 +1,30 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc 
+Calls /rpc/cas<p/>
+
+Performs an atomic record value compare-and-swap. Updates the record's
+old value. The call will fail if the key doesn't exist, or if the
+value in the database does not match the OldValue.
+
+```
+% example:
+
+1> kterl:get(Pid, "cas_test").
+{error,no_record}.
+2> kterl:cas(Pid, "cas_test", "old value", "new value").
+{error,expired_value}.
+3> ok = kterl:add(Pid, "cas_test", <<"old value">>).
+ok
+4> kterl_result:get_value(kterl:get(Pid, "cas_test")).
+<<"old value">>
+5> kterl:cas(Pid, "cas_test", "Bogus old value", "new value").
+{error,expired_value}.
+6> ok = kterl:cas(Pid, "cas_test", "old value", "new value").
+ok
+7> kterl_result:get_value(kterl:get(Pid, "cas_test")).
+<<"new value">>
+'''
+
+<p/>On success cas/4 returns <code>'ok'</code>.<p/>
+@see cas/3
+

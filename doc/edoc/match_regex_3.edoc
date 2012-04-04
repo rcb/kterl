@@ -1,0 +1,33 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc
+Calls /rpc/match_regex<p/>
+
+Retrieves all keys from a database that match a regular expression. An
+empty regex parameter returns all keys in a database. The optional
+parameter 'max' can be used to limit the number of results. This call
+also supports the signal/wait signaling mechanism.
+
+```
+% example: the database file 'dictionary.kct' was populated with
+% an english wordlist. Retrieve words that match a regular expression.
+
+match_dict(Pid, Regex) ->
+    {ok, Res} = kterl:match_regex(Pid, Regex, [{database, "dictionary.kct"}]),
+    kterl_result:get_keys(Res).
+
+1> match_dict(Pid, "(^c..$|^(a|z).$)").
+[<<"ad">>,<<"ah">>,<<"am">>,<<"an">>,<<"as">>,<<"at">>,
+ <<"ax">>,<<"ay">>,<<"cab">>,<<"cad">>,<<"cam">>,<<"can">>,
+ <<"cap">>,<<"car">>,<<"cat">>,<<"caw">>,<<"chi">>,<<"cob">>,
+ <<"cod">>,<<"cog">>,<<"con">>,<<"coo">>,<<"cop">>,<<"cot">>,
+ <<"cow">>,<<"cox">>,<<"coy">>,<<"cry">>,<<...>>|...]
+2> length(match_dict(Pid, "")).
+99183
+'''
+<p/>On success match_regex/3 will return <code>{ok, Result}</code>. The <code>Result</code> can then be passed to the following function(s) to access:<p/>```
+kterl_result:get_keys(Result).            % All matching keys.
+kterl_result:get_signaled_count(Result).  % The number of clients signaled (if 'signal' was passed to the call.)
+
+'''
+@see match_regex/2
+

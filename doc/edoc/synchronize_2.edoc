@@ -1,0 +1,25 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc Calls /rpc/synchronize<br/>
+
+Synchronize a specified database's updated contents with the file and
+the device. Refer to the Kyoto Tycoon documentation for more
+information on the hard and command arguments.
+
+```
+% example:
+ 
+synchronize_kt_database(Pid, Database) ->
+    case kterl:synchronize(Pid, [{database, Database},{hard, true}]) of
+        {ok,_} -> ok;
+        Err -> Err
+    end.
+
+1> synchronize_kt_database(Pid, "database.kct").
+ok
+'''
+<p/>On success synchronize/2 will return <code>{ok, Result}</code>. The <code>Result</code> can then be passed to the following function(s) to access:<p/>```
+kterl_result:get_signaled_count(Result).  % The number of clients signaled (if 'signal' was passed to the call.)
+
+'''
+@see synchronize/1
+

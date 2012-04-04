@@ -1,0 +1,29 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc
+
+Calls /rpc/seize<p/>
+
+Retrieve and remove a record from the primary database in one atomic
+operation. The call returns the record's value, and if set, the
+record's expiration time.
+
+```
+1> ok = kterl:set(Pid, <<"key">>, <<"value">>, [{xt, 10}]).
+ok
+2> {ok, Res} = kterl:seize(Pid, <<"key">>).
+...
+3> kterl_result:get_value(Res).
+<<"value">>
+4> kterl_result:get_exptime_future_seconds(Res).
+9
+5> kterl:seize(Pid, <<"key">>).
+{error, no_record}.
+'''
+<p/>On success seize/2 will return <code>{ok, Result}</code>. The <code>Result</code> can then be passed to the following function(s) to access:<p/>```
+kterl_result:get_value(Result).           % The record's value.
+kterl_result:get_exptime(Result).         % The record's expiration time (if set.)
+
+'''
+@see seize/3
+
+

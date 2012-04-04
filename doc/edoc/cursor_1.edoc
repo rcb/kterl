@@ -1,0 +1,23 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc
+
+Returns a cursor handle for all subsequent cur_* calls. The cursor
+handle retains the process id of the connection handler passed to this
+function.
+
+@see release_cursor/1
+@see cur_jump/1
+@see cur_jump/2
+@see cur_jump_back/1
+@see cur_jump_back/2
+@see cur_step_back/1
+@see cur_set_value/2
+@see cur_set_value/3 
+@see cur_remove/1
+@see cur_get_key/1
+@see cur_get_key/2
+@see cur_get_value/1
+@see cur_get_value/2
+@see cur_get/2
+@see cur_seize/1
+

@@ -1,0 +1,51 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc
+Calls /rpc/get<p/>
+
+Retrieve a key's value, optionally specifying a database and signal
+parameters. The record's expiration time, if set, is available in the
+results.
+
+=== example 1 ===
+```
+% retrieve the user record from the users database.
+get_user(Pid, Username) ->
+    case kterl:get(Pid, Username, [{database, "users.kct"}]) of
+        {ok, Res} ->
+            {ok, kterl_result:get_value(Res)};
+        {error, timed_out} ->
+            throw({error, {no_user_record, Username}})
+    end.
+'''
+
+=== example 2 === 
+
+``` 
+
+% another process will create an auto-expiring status record in the
+% stats database and then will send a "stats_set" signal. get_stats_record 
+% will wait for the signal for up to 60 seconds, and when it's received,
+% it will retrieve the status value and the record's expiration time.
+
+get_stats_record(Pid) ->
+    case kterl:get(Pid, "status", 
+                   [{database, "stats.kct"},
+                    {wait,     "stats_set"},
+                    {waittime, 60}]) of
+        {ok, Res} ->
+            Value = kterl_result:get_value(Res),
+            Exptime = kterl_result:get_exptime_datetime(Res),
+            {ok, Value, Exptime};
+        {error, Err} when Err =:= no_record; Err =:= timed_out ->
+            throw({error, {get_stats, Err}})
+end.
+'''
+<p/>On success get/3 will return <code>{ok, Result}</code>. The <code>Result</code> can then be passed to the following function(s) to access:<p/>```
+kterl_result:get_value(Result).           % The record's value.
+kterl_result:get_exptime(Result).         % The record's expiration time (if set.)
+kterl_result:get_signaled_count(Result).  % The number of clients signaled (if 'signal' was passed to the call.)
+
+'''
+@see get/2
+
+

@@ -1,0 +1,168 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@author Rich Beerman <rbeer@beerman.org>
+@version 1.0.0
+@doc
+kterl is an Erlang interface to the Kyoto Tycoon cache/storage server.
+
+== features ==
+<ul> 
+<li>%100 feature support of Kyoto Tycoon's HTTP and binary protocols.</li>
+<li>Full OTP compliance.</li>
+<li>High performance, robust, and non-blocking protocol handling.</li>
+<li>A documented API that provides a simple, clean, and idiomatic interface.</li>
+</ul>
+
+<p/>Kyoto Tycoon supports standard key/value database calls, such as
+set, add, remove, seize, and so on, but there are specific features
+and behaviors to be aware of while exploring the documentation:
+
+=== binary protocol ===
+
+Clients interact with Kyoto Tycoon through HTTP or a binary protocol,
+kterl supports both methods on the same socket connection. The binary
+calls are {@link bin_set_bulk/2}, {@link bin_get_bulk/2}, {@link
+bin_remove_bulk/2}, and {@link bin_play_script/2}. Although these
+methods are not as feature rich as their HTTP based siblings, they do
+provide significant performance advantages.
+
+=== multiple databases ===
+
+Kyoto Tycoon supports multiple databases and database types, and all
+of kterl's calls have at least one variation that provides the option
+to specify a database to operate on.
+
+<p/>
+
+The HTTP calls accept a database specifier of a string/binary, which
+is the database's filename without the path (such as "test.kct"), or a
+zero-based integer. For example, if ktserver is started as:
+
+``` ktserver /path/to/users.kct /path/to/session.kct '''
+
+The users database can be referred to as {database, "users.kct"} or
+{database, 0}. The session database is {database, 1} or {database,
+"session.kct"}.
+
+<p/>
+
+The binary protocol only supports integer database identifcation, so
+it might be useful to standardize on integer identification in any new
+software that could potentially use both binary and HTTP based
+protocol functions.
+
+=== cursors ===
+
+Kyoto Tycoon implements a well-designed system for interacting with
+its databases through cursors, which are a simple and stateful
+abstraction for traversing and interacting with specific records
+through a pointer.
+
+<p/>
+
+The interface is very easy to understand. First, the software obtains
+a cursor through the use of the {@link cursor/1} call. That cursor
+then must to be positioned to a specific record in a database through
+the use of jump calls such as {@link cur_jump/2} or {@link
+cur_jump_back/2}. Those calls are documented in greater detail below.
+
+<p/>
+
+One simple but important nuance of the cursor interface is the
+difference between the cur_jump and cur_jump_back calls. They both
+support the ability to jump to a specific record located by its key,
+or separately, they can jump to the first or last record in a
+database. The important difference is the jump method influences all
+subsequent automatic cursor stepping operations.
+
+<p/>
+
+As an example, the {@link cur_get/2} function retrieves the key and
+value of a record the cursor points to. It has a boolean 'step'
+parameter, which if true, instructs Kyoto Tycoon to move the cursor to
+an adjacent record after the cursor's record is accessed. If the
+cursor was initially positioned with a cur_jump_back call, the cursor
+will move (or 'step') towards the start of the database.  If the
+cursor was positioned with a cur_jump call, the cursor will step
+towards the end of the database.
+
+<p/>
+
+This functionality is useful if the software needs to iterate through
+the entire database (or a subset from a specific starting key.) Simply
+jump to a starting position using cur_jump to iterate in forward key
+order, or cur_jump_back for reverse key order. Then repeatedly invoke
+an automatic stepping call such as {@link cur_get_key/2} until it
+returns {error,invalid_cursor}. At that point, the database contains
+no additional records for the cursor to step to.
+
+<p/>
+
+A cursor has been invalidated by the server when a cursor call returns
+{error,invalid_cursor}. When this occurs, the cursor is unusable until
+it's repositioned with a jump call.
+
+<p/>
+
+On final note: Cursor traversal order is dependent on the database's
+type. For tree databases, it is ordered by key, and for hash
+databases, by a hashing function. Hash type databases possibly will
+not support cur_step_back calls.
+
+=== signals ===
+
+Kyoto Tycoon provides to its clients an ability to synchronize work
+through the use of signals. Clients can wait for a named signal before
+performing a database operation, and/or broadcast a signal to one or
+more waiting clients after a database operation is finished.
+
+kterl exposes this functionality throughout. The relevant call
+parameters are:
+
+```
+{wait, "signalname"}      Forces the client to block until it receives "signalname".
+
+
+{waittime, NSeconds}      Optional timeout parameter for 'wait', in seconds. If the signal isn't
+                          received within this period, the database operation isn't performed 
+                          and the function returns {error,timed_out}. The default value is 30 seconds.
+
+
+{signal, "signalname"}    The client will send "signalname" to one or all clients after its
+                          database operation is complete.
+
+
+{signalbroad, boolean()}  Optional 'signal' parameter. If set to true, all clients waiting on
+                          "signalname" will receive the signal. Otherwise, it will be received
+                          by the first client to enter a wait state. This default value is false.
+
+'''
+
+kterl calls that are passed a 'signal' parameter will return a count
+of the number of clients that received the signal. This value is
+accessed by {@link kterl_result:get_signaled_count/1}.
+
+
+The Kyoto Tycoon documentation warns that a call waiting on a signal
+occupies a thread, and that it should be used only for monitoring
+records by a few clients.
+
+=== record expiration ===
+
+Kyoto Tycoon has the ability to automatically expire records. kterl
+provides the ability to set an expiration time by using the 'xt'
+parameter on all supported calls, such as {@link set/4}, {@link
+add/4}, {@link replace/4}. The binary protocol {@link bin_set_bulk/2}
+also supports setting an expiration time.
+
+<p/>
+
+The 'xt' parameter accepts two possible values to set an expiration
+time: An integer for the number of seconds the record should exist, or
+an Erlang <a
+href="http://www.erlang.org/doc/man/calendar.html">calendar:datetime()</a>
+value to set an absolute date and time. kterl handles this conversion
+automatically.
+
+<p/>
+
+

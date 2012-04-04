@@ -1,0 +1,44 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc
+Calls /rpc/get<p/>
+
+Retrieve a key's value from the primary database. The record's
+expiration time, if set, is available in the results.
+
+```
+% example: setting a record with an expiration time 60 seconds in the future:
+
+1> {ok, _} = kterl:set(Pid, "test_exp", <<"60..59..58..">>, [{xt,60}]).
+...
+2> {ok, Res} = kterl:get(Pid, <<"test_exp">>),
+3> kterl_result:get_value(Res).
+<<"60..59..58..">>
+4> kterl_result:get_exptime(Res).
+1332365348
+5> kterl_result:get_exptime_datetime(Res).
+{{2012,3,21},{14,29,8}}
+6> kterl_result:get_exptime_future_seconds(Res).
+29
+'''
+Wait until the record expires...
+```
+7> kterl:get(Pid, <<"test_exp">>).
+{error, no_record}
+'''
+
+If the record does not have an expiration time set, the get_exptime
+functions in kterl_result will return undefined:
+
+```
+1> {ok, _} = kterl:set(Pid, <<"test_key">>, <<"test_value">>).
+...
+2> kterl_result:get_exptime(kterl:get(Pid, "test_key")).
+undefined
+'''
+
+<p/>On success get/2 will return <code>{ok, Result}</code>. The <code>Result</code> can then be passed to the following function(s) to access:<p/>```
+kterl_result:get_value(Result).           % The record's value.
+kterl_result:get_exptime(Result).         % The record's expiration time (if set.)
+
+'''
+@see get/3

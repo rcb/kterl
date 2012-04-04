@@ -1,0 +1,22 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc Calls /rpc/replace<p/>
+
+Replaces the value of an existing record in the primary database.
+
+```
+% example:
+
+update_user_record(Pid, Username, UserRecord) ->
+    case kterl:replace(Pid, Username, UserRecord) of
+        ok -> ok;
+        {error, no_record} -> throw({error, {no_user, Username}})
+    end.
+'''
+        
+<p/>On success replace/3 returns <code>'ok'</code>.<p/>
+@see replace/2
+@see replace/4
+@see cas/4
+@see cas/3
+
+

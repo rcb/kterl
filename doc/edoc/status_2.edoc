@@ -1,0 +1,21 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc Calls /rpc/status<br/>
+Receives miscellaneous status information of a specified database
+```
+% example:
+
+1> kterl_result:get_records(kterl:status(Pid), "test.kct")).
+[{<<"apow">>,<<"8">>},
+ {<<"bnum">>,<<"65536">>},
+ {<<"chksum">>,<<"188">>},
+ {<<"count">>,<<"8">>},
+ {<<"cusage">>,<<"237">>},
+ {<<"dfunit">>,<<"0">>},
+ ... ]
+'''
+<p/>On success status/2 will return <code>{ok, Result}</code>. The <code>Result</code> can then be passed to the following function(s) to access:<p/>```
+kterl_result:get_records(Result).         % All records.
+
+'''
+@see status/1
+

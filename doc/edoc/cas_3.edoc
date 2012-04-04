@@ -1,0 +1,55 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc 
+Calls /rpc/cas<p/>
+Depending on the parameters, this function can perform an atomic value
+compare-and-swap, a record add, or an atomic record compare-and-remove
+operation.
+<p/>
+The functionality is controlled by two optional proplists parameters:
+<code>'oval'</code>, for the record's old value, and <code>'nval'</code> 
+for the new. If <code>'oval'</code> is omitted, a new record is added with 
+<code>'nval'</code> as the value. If <code>'nval'</code> is omitted, but 
+<code>'oval'</code> matches the existing record's value, the
+record is removed. 
+
+```
+1> kterl_result:get_value(kterl:get(Pid, "cas_test")).
+{error,no_record}
+2> {ok,_} = kterl:cas(Pid,"cas_test",[{nval,"testing"}]).
+...
+3> kterl_result:get_value(kterl:get(Pid, "cas_test")).
+<<"testing">>
+4> kterl:cas(Pid,"cas_test",[{nval,"new value"}]).
+{error,expired_value}
+5> {ok,_} = kterl:cas(Pid,"cas_test",[{oval,"testing"}, {nval,"1,2,3"}]).
+...
+6> kterl_result:get_value(kterl:get(Pid, "cas_test")).
+<<"1,2,3">>
+7> kterl:cas(Pid,"cas_test",[{oval,"bogus value"}]).
+{error,expired_value}
+8> {ok,_} = kterl:cas(Pid,"cas_test",[{oval,"1,2,3"}]).
+...
+9> kterl:get(Pid,"cas_test").
+{error,no_record}
+'''
+=== example ===
+```
+%%% updates the user's age in the users.kct database's user record.
+update_user_age(Pid, User0 = #user{name = Username}, Age) ->
+    User1 = User0#user{age = Age},
+    case kterl:cas(Pid, Username, 
+                   [{database, "users.kct"},
+                    {oval, user_record(User0)},
+                    {nval, user_record(User1)}]) of
+        {ok,_} -> ok;
+        Err = {error,expired_value} -> throw(Err)
+    end.
+
+user_record(User = #user{}) -> term_to_binary(User, [compressed]).
+'''   
+<p/>On success cas/3 will return <code>{ok, Result}</code>. The <code>Result</code> can then be passed to the following function(s) to access:<p/>```
+kterl_result:get_signaled_count(Result).  % The number of clients signaled (if 'signal' was passed to the call.)
+
+'''
+@see cas/4
+

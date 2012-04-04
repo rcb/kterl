@@ -1,0 +1,26 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc 
+Calls /rpc/cur_jump_back<p/>
+
+Positions the record in a database. Like {@link cur_jump_back/2}, this
+function accepts the optional 'key' and 'database' parameters. In
+addition to these, this function accepts 'wait', 'waittime', 'signal',
+and 'signalbroad' parameters, to interact with the signaling
+mechanisms on the server.
+
+<p/>
+
+After this call, the cursor will be positioned to the
+<em>previous</em> record in all subsequent calls that automatically
+'step' the cursor.
+
+<p/>On success cur_jump_back_opt/2 will return <code>{ok, Result}</code>. The <code>Result</code> can then be passed to the following function(s) to access:<p/>```
+kterl_result:get_signaled_count(Result).  % The number of clients signaled (if 'signal' was passed to the call.)
+
+'''
+@see cur_jump/1
+@see cur_jump/2
+@see cur_jump_opt/2
+@see cur_jump_back/1
+@see cur_jump_back/2
+

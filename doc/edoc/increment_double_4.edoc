@@ -1,0 +1,28 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc
+Calls /rpc/increment_double<p/>
+
+Adds a number to the numeric double value of a record, and returns the
+resulting value. It must be used to set an initial value for
+subsequent increment_double calls.
+
+```
+% example: this function updates a counter in the "sysstat.kct" database.
+
+inc_sys_counter(Pid, Key, Success) ->
+    Value = case Success of 
+                true -> 2.3;
+                false -> -1.1
+            end,
+    ok = kterl:increment_double(Pid, Key, Value, [{database, "sysstat.kct"}]).
+'''
+
+<p/>On success increment_double/4 will return <code>{ok, Result}</code>. The <code>Result</code> can then be passed to the following function(s) to access:<p/>```
+kterl_result:get_num(Result).             % The result from an increment call, or a record count.
+kterl_result:get_signaled_count(Result).  % The number of clients signaled (if 'signal' was passed to the call.)
+
+'''
+@see increment/3
+@see increment/4
+@see increment_double/3
+

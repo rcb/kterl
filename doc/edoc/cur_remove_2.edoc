@@ -1,0 +1,28 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc
+Calls /rpc/cur_remove<p/>
+
+Removes the current record located at the cursor. The cursor is then
+positioned to the next or previous record in the database, depending
+on if the cursor was positioned with cur_step* or cur_step_back*
+functions.
+
+<p/>
+
+If the last (or first) record in the database is removed or seized,
+the cursor is invalidated for future operations until it's
+repositioned with a jump call.
+
+<p/>
+
+This function can interact with the server's signaling mechanism with
+the optional 'wait', 'waittime', 'signal', and 'signalbroad'
+parameters.
+
+<p/>On success cur_remove/2 will return <code>{ok, Result}</code>. The <code>Result</code> can then be passed to the following function(s) to access:<p/>```
+kterl_result:get_signaled_count(Result).  % The number of clients signaled (if 'signal' was passed to the call.)
+
+'''
+@see cursor/1
+@see cur_remove/1
+

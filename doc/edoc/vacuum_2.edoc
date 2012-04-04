@@ -1,0 +1,32 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc
+
+Calls /rpc/vacuum<p/>
+
+Scans a database and eliminates regions of expired records. Two optional
+parameters to note are 'database', which configures the database to vacuum,
+and 'step', which configures the number of steps in the vacuum operation.
+If 'step' is omitted or equal to 0, the whole database region is scanned.
+Signal/wait operations are available through this call, as well.
+
+```
+% example: waits for "vacuum_database" signal for 2 hours, and then
+% performs a vacuum on the entire "session.kct" database.
+
+wait_vacuum(Pid) ->
+    case kterl:vacuum(Pid, [{database, "session.kct"},
+                            {wait,     "vacuum_database"},
+                            {waittime, 2 * 60 * 60}]) of
+        {ok, _} ->
+            ok;
+        Error = {error, _} ->
+            Error
+    end.
+'''
+<p/>On success vacuum/2 will return <code>{ok, Result}</code>. The <code>Result</code> can then be passed to the following function(s) to access:<p/>```
+kterl_result:get_signaled_count(Result).  % The number of clients signaled (if 'signal' was passed to the call.)
+
+'''
+@see vacuum/1
+
+

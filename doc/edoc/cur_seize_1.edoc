@@ -1,0 +1,57 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc
+Calls /rpc/cur_seize<p/>
+
+Returns the key, value, and if set, the expiration time of the record
+located at the cursor. The record is then removed. If the last (or
+first, depending on cur_jump/cur_jump_back step order) record is
+removed or seized, the cursor is invalidated for future operations
+until it's repositioned with a jump call.
+
+```
+% example:
+
+1> ok = kterl:clear(Pid).
+ok
+2> {ok,_} = kterl:set_bulk(Pid, [{"key1","val1"}, {"key2","val2"}, {"key3","val3"}]).
+...
+3> Cursor = kterl:cursor(Pid).
+...
+4> ok = kterl:cur_jump(Cursor, [{key,"key2"}]).
+ok
+5> {ok,Res1} = kterl:cur_seize(Cursor).
+...
+6> kterl:get_key(Res1).
+<<"key2">>
+7> kterl:get_value(Res1).
+<<"val2">>
+8> {ok, Res2} = kterl:cur_seize(Cursor).
+...
+9> kterl:get_key(Res2).
+<<"key3">>
+10> kterl:get_value(Res2).
+<<"key3">>
+11> kterl:cur_get(Cursor).
+{error,invalid_cursor}
+12> ok = kterl:cur_jump(Cursor, [{key,"key1"}]).
+ok
+13> {ok, Res3} = kterl:cur_get(Cursor).
+...
+14> kterl_result:get_key(Res3).
+<<"key1">>
+15> kterl_result:get_value(Res3).
+<<"val1">>
+16> {ok,_} = kterl:cur_seize(Cursor).
+...
+'''
+<p/>On success cur_seize/1 will return <code>{ok, Result}</code>. The <code>Result</code> can then be passed to the following function(s) to access:<p/>```
+kterl_result:get_key(Result).             % The record's key.
+kterl_result:get_value(Result).           % The record's value.
+kterl_result:get_exptime(Result).         % The record's expiration time (if set.)
+
+'''
+@see cursor/1
+@see cur_seize/2
+
+
+

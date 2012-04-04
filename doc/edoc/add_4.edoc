@@ -1,0 +1,27 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc Calls /rpc/add<br/>
+
+Adds a new record to a specified database. This is the function to
+call to set an expiration time, signal/wait parameters, or to specify
+which database the record will be added to.
+
+```
+% example: waits for an "goahead" signal for 30 seconds, and then adds
+% a new record to the primary database. The call fails if it doesn't receive
+% the signal within the waittime setting.
+
+add_status_record(Pid, Key, Value) ->
+    case kterl:add(Pid, Key, Value, [{wait, "goahead"}, {waittime, 30}]) of
+        {ok, _} -> 
+            ok;
+        {error, Why} when Why =:= duplicate_key; Why =:= timed_out ->
+            throw({error, {add_status, Why, Key}})
+end.
+'''
+<p/>On success add/4 will return <code>{ok, Result}</code>. The <code>Result</code> can then be passed to the following function(s) to access:<p/>```
+kterl_result:get_signaled_count(Result).  % The number of clients signaled (if 'signal' was passed to the call.)
+
+'''
+@see add/2
+@see add/3
+

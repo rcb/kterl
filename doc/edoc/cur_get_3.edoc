@@ -1,0 +1,20 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc
+Calls /rpc/cur_get<p/>
+
+Retrieves the key and value, and if set, the expiration time of the
+record located at the cursor. If step is true, the server will
+reposition the cursor to an adjacent record after the key and value
+are retrieved. This function cal also interact with the server's
+wait/signal mechanism.
+
+<p/>On success cur_get/3 will return <code>{ok, Result}</code>. The <code>Result</code> can then be passed to the following function(s) to access:<p/>```
+kterl_result:get_value(Result).           % The record's value.
+kterl_result:get_key(Result).             % The record's key.
+kterl_result:get_exptime(Result).         % The record's expiration time (if set.)
+kterl_result:get_signaled_count(Result).  % The number of clients signaled (if 'signal' was passed to the call.)
+
+'''
+@see cursor/1
+@see cur_get/1
+@see cur_get/2

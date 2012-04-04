@@ -1,0 +1,43 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc
+
+Calls /rpc/set_bulk<p/>
+
+Stores multiple records at once, returning the number of records
+stored. Optionally, the database and/or signal operations, and an
+option to force atomicity can be specified. {@link bin_set_bulk/2} is
+significantly faster than this call, but it lacks the ability to
+configure signal operations, atomicity, or specify the destination
+database as a string.
+
+```
+% example: This function creates several bogus status records in the "status.kct" database.
+% after the records are added, a signal "status_available" is broadcast to all listeners.
+% the number of processes waiting on that signal is returned, along with the number of
+% records added.
+
+add_status_records(Pid) ->
+    Sttrecs = [{<<"status_1">>,<<"aGVsbG8gd29ybGQsIHRoaXMgaXMgYSB0ZXN0Lg==">>}
+               {<<"status_2">>,<<"ZG9uJ3QgcGFuaWMh">>},
+               {<<"status_3">>,<<"Li4uIHRoZSBlbmQgLi4u">>}],
+    case kterl:set_bulk(Pid, Sttrecs, [{database, "status.kct"},
+                                       {xt, 60 * 60 * 24},
+                                       {signal, "status_available"},
+                                       {signalbroad, true},
+                                       {atomic, true}]) of
+        {ok, Res} ->
+            RecsAdded = kterl_result:get_num(Res),
+            NSignaled = kterl_result:get_signaled_count(Res),
+            {ok, RecsAdded, NSignaled};
+        Err = {error, _} ->
+            Err
+    end.
+'''
+<p/>On success set_bulk/3 will return <code>{ok, Result}</code>. The <code>Result</code> can then be passed to the following function(s) to access:<p/>```
+kterl_result:get_num(Result).             % The result from an increment call, or a record count.
+kterl_result:get_signaled_count(Result).  % The number of clients signaled (if 'signal' was passed to the call.)
+
+'''
+@see set_bulk/2
+@see bin_set_bulk/2
+    

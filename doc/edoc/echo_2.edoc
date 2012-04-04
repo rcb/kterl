@@ -1,0 +1,15 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc Calls /rpc/echo<p/>
+The server will echo the key,value pairs passed to this call. 
+```
+% example:
+
+1> {ok, Res} = kterl:echo(Pid, [{"hello","world"}]),
+2> [{<<"hello">>, <<"world">>}] = kterl_result:get_records(Res).
+'''
+
+<p/>On success echo/2 will return <code>{ok, Result}</code>. The <code>Result</code> can then be passed to the following function(s) to access:<p/>```
+kterl_result:get_records(Result).         % All records.
+kterl_result:get_num(Result).             % The result from an increment call, or a record count.
+
+'''

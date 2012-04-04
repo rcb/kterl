@@ -1,0 +1,27 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc 
+Calls /rpc/increment<p/>
+
+Adds a number to the numeric integer value of a record, and returns
+the resulting value. It must be used to set an initial value for
+subsequent increment calls.
+
+```
+% example: this function updates a resource counter in the "resource.kct" database.
+% the record will automatically expire in one minute after the final increment call is
+% performed on this key.
+
+inc_resource_count(Pid, ResourceName) ->
+    ok = kterl:increment(Pid, ResourceName, 1, 
+                         [{database, "resource.kct"},
+                          {xt, 60}]).
+'''
+<p/>On success increment/4 will return <code>{ok, Result}</code>. The <code>Result</code> can then be passed to the following function(s) to access:<p/>```
+kterl_result:get_num(Result).             % The result from an increment call, or a record count.
+kterl_result:get_signaled_count(Result).  % The number of clients signaled (if 'signal' was passed to the call.)
+
+'''
+@see increment/3
+@see increment_double/3
+@see increment_double/4
+

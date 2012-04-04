@@ -1,0 +1,35 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc
+
+Calls /rpc/remove_bulk<p/>
+
+Removes multiple records at once, returning the number of record
+deletions. {@link bin_remove_bulk/2} is significantly faster than this call.
+
+```
+% example:
+
+1> Records = [{"key1","val1"}, {<<"key2">>, <<"val2">>}, {"key3", 1234}, {"key4",1.23}].
+...
+2> {ok, _} = kterl:set_bulk(Pid, Records).
+...
+3> kterl_result:get_records(kterl:get_bulk(Pid, [Key || {Key,_} <- Records])).
+[{<<"key1">>,<<"val1">>},
+ {<<"key2">>,<<"val2">>},
+ {<<"key3">>,<<"1234">>},
+ {<<"key4">>,<<"1.230000">>}]
+4> {ok, Res} = kterl:remove_bulk(Pid, [Key || {Key,_} <- Records]).
+...
+5> kterl_result:get_num(Res).
+4
+6> kterl_result:get_records(kterl:get_bulk(Pid, [Key || {Key,_} <- Records])).
+[]
+'''
+<p/>On success remove_bulk/2 will return <code>{ok, Result}</code>. The <code>Result</code> can then be passed to the following function(s) to access:<p/>```
+kterl_result:get_num(Result).             % The result from an increment call, or a record count.
+
+'''
+@see remove_bulk/3
+@see bin_remove_bulk/2
+
+

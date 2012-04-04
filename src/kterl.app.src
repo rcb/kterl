@@ -1,0 +1,12 @@
+{application, kterl,
+ [
+  {description, "Erlang Kyoto Tycoon client"},
+  {vsn, "1.0.0"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, { kterl_app, []}},
+  {env, []}
+ ]}.

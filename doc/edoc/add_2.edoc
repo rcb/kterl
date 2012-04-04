@@ -1,0 +1,20 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc Calls /rpc/add<p/>
+
+Adds a new record to the primary database.
+
+```
+% example:
+
+add_new_record(Pid, Record = {Key, _Value}) ->
+    case kterl:add(Pid, Record) of
+         ok -> 
+             ok;
+         {error, duplicate_key} -> 
+             throw({duplicate_key, Key})
+end.
+'''
+<p/>On success add/2 returns <code>'ok'</code>.<p/>
+@see add/3
+@see add/4
+

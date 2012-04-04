@@ -1,0 +1,36 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc
+
+Calls /rpc/get_bulk<p/>
+
+Retrieves multiple records at once. Optionally, the database and/or
+signal operations, and an option to force atomicity can be
+specified. {@link bin_get_bulk/2} is significantly faster than this call, but
+it lacks the ability to configure signal operations, atomicity, or
+specify the destination database as a string.
+
+```
+
+% example: waits up to 60 seconds for a "stats_avail" signal, and then attempts to
+% retrieve 10000 records in a bulk operation. it returns the records that were available.
+
+get_bulk_demo(Pid) ->
+    Keys = ["status_" ++ integer_to_list(N) || N <- lists:seq(1,10000)],
+    case kterl:get_bulk(Pid, Keys, [{database, "status.kct"},
+                                    {wait,     "stats_avail"},
+                                    {waittime, 60}]) of
+        {ok, Res} ->
+            {ok, kterl_result:get_records(Res)};
+        Error = {error, _} ->
+            Error
+    end.
+'''
+<p/>On success get_bulk/3 will return <code>{ok, Result}</code>. The <code>Result</code> can then be passed to the following function(s) to access:<p/>```
+kterl_result:get_records(Result).         % All records.
+kterl_result:get_signaled_count(Result).  % The number of clients signaled (if 'signal' was passed to the call.)
+
+'''
+@see get_bulk/2
+@see bin_get_bulk/2
+
+

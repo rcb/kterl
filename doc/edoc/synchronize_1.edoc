@@ -1,0 +1,12 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc Calls /rpc/synchronize<p/>
+Synchronize the primary database's updated contents with the file and the device.
+```
+% example:
+
+1> kterl:synchronize(Pid).
+ok
+'''
+<p/>On success synchronize/1 returns <code>'ok'</code>.<p/>
+@see synchronize/2
+

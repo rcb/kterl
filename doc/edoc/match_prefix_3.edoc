@@ -1,0 +1,35 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc
+Calls /rpc/match_prefix<p/>
+
+Retrieves all keys from a optionally specified database that match a
+prefix string. An empty string matches all keys in that
+database. There is a 'max' parameter, which provides the ability to
+limit the number of keys returned by the server. Additionally, this
+call supports the signal wait/broadcast functionality.
+
+``` 
+
+% example: Wait up to 10 minutes for a 'scan_cache' signal on the
+% "cache.kct" database, and retrieve up to 1000 keys that have 
+% the prefix "cache_".
+
+scan_cache(Pid) ->
+    case kterl:match_prefix(Pid, "cache_", [{database, "cache.kct"},
+                                            {max,      1000},
+                                            {wait,     "scan_cache"},
+                                            {waittime, 10 * 60}]) of
+        {ok, Res} ->
+            {ok, kterl_result:get_keys(Res)};
+        Error = {error, _} ->
+            Error
+    end.
+'''
+<p/>On success match_prefix/3 will return <code>{ok, Result}</code>. The <code>Result</code> can then be passed to the following function(s) to access:<p/>```
+kterl_result:get_keys(Result).            % All matching keys.
+kterl_result:get_signaled_count(Result).  % The number of clients signaled (if 'signal' was passed to the call.)
+
+'''
+@see match_prefix/2
+    
+

@@ -1,0 +1,35 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc
+Calls /rpc/cur_get_value<p/>
+
+Retrieves the value of the record located at the cursor. This function
+does not instruct the server to 'step' the cursor to the next/previous
+record after the call. For this, use {@link cur_get_value/2} or {@link
+cur_get_value/3}.
+
+```
+% example:
+
+1> ok = kterl:clear(Pid).
+ok
+2> ok = kterl:add(Pid, <<"key">>, <<"value">>).
+ok
+3> Cursor = kterl:cursor(Pid).
+...
+4> ok = kterl:cur_jump(Cursor).
+ok
+5> kterl_result:get_value(kterl:cur_get_value(Cursor)).
+<<"value">>
+6> kterl_result:get_key(kterl:cur_get_key(Cursor)).
+<<"key">>
+
+'''
+<p/>On success cur_get_value/1 will return <code>{ok, Result}</code>. The <code>Result</code> can then be passed to the following function(s) to access:<p/>```
+kterl_result:get_value(Result).           % The record's value.
+kterl_result:get_exptime(Result).         % The record's expiration time (if set.)
+
+'''
+@see cursor/1
+@see cur_get_value/2
+@see cur_get_value/3
+

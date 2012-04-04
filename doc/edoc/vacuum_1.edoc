@@ -1,0 +1,13 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc
+
+Calls /rpc/vacuum<p/>
+
+Scans the primary database and eliminates regions of expired records.
+
+```
+1> ok = kterl:vacuum(Pid).
+ok
+'''
+<p/>On success vacuum/1 returns <code>'ok'</code>.<p/>
+@see vacuum/2

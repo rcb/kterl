@@ -1,0 +1,13 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc Calls /rpc/clear<p/>
+Removes all records from the primary database.
+```
+% example:
+
+clear_kt_database(Pid) ->
+    ok = kterl:clear(Pid).
+'''
+<p/>On success clear/1 returns <code>'ok'</code>.<p/>
+@see clear/2
+
+

@@ -1,0 +1,3 @@
+* improve performance of body_to_kv
+* automatic detection of url/base64 encoding
+

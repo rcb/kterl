@@ -1,0 +1,30 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc Calls /rpc/play_script<p/>
+Invokes a procedure of the server's script language extension.
+```
+% example:
+% this plays a script without args, and then uses the server's
+% signaling mechanism to notify all other clients waiting for that signal.
+% it returns the script's output and the number of clients that received
+% the signal.
+
+-spec play_kt_script(Pid::pid(), Script::binary()) ->
+      {ok, [{Key::binary(), Value::binary()}], non_neg_integer()}.
+
+play_kt_script(Pid, Script) ->
+    {ok, Res} = kterl:play_script(Pid, Script, [], 
+                   [{signal, "script"}, {signalbroad, true}]).
+    Records  = kterl:get_records(Res),
+    Signaled = kterl:get_signaled_count(Res),
+    {ok, Records, Signaled}.
+'''
+<p/>On success play_script/4 will return <code>{ok, Result}</code>. The <code>Result</code> can then be passed to the following function(s) to access:<p/>```
+kterl_result:get_records(Result).         % All records.
+kterl_result:get_num(Result).             % The result from an increment call, or a record count.
+kterl_result:get_signaled_count(Result).  % The number of clients signaled (if 'signal' was passed to the call.)
+
+'''
+@see play_script/2
+@see play_script/3
+@see bin_play_script/3
+

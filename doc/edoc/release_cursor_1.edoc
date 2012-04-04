@@ -1,0 +1,9 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc
+Release the cursor by invoking /rpc/cur_delete.<p/> 
+
+The documentation states this will delete the cursor implicitly. As of
+kyoto tycoon 0.9.53, calling /rpc/cur_delete will invalidate the
+cursor until a jump call is performed.
+
+@see cursor/1

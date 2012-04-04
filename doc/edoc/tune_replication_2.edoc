@@ -1,0 +1,8 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc Calls /rpc/tune_replication<p/>
+Sets the server's replication configuration. See the Kyoto Tycoon documentation for further information.
+
+<p/>On success tune_replication/2 will return <code>{ok, Result}</code>. The <code>Result</code> can then be passed to the following function(s) to access:<p/>```
+kterl_result:get_signaled_count(Result).  % The number of clients signaled (if 'signal' was passed to the call.)
+
+'''

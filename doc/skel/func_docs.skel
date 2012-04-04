@@ -1,0 +1,2235 @@
+%% __file__ cur_step_2.edoc
+@doc
+Calls /rpc/cur_step<p/>
+
+Positions the cursor to the next record. Unlike {@link cur_step/1},
+this function accepts optional 'wait', 'waittime', 'signal', and
+'signalbroad' parameters to interact with the server's signaling
+mechanism.
+
+```
+% example:
+
+1> kterl:set_bulk(Pid,[{"key1","val1"},{"key2","val2"},{"key3","val3"}]).
+...
+2> Cursor = kterl:cursor(Pid).
+3> ok = kterl:cur_jump(Cursor,[{key, "key2"}]).
+ok
+4> kterl_result:get_key(kterl:cur_get_key(Cursor)).
+<<"key2">>
+5> {ok,_} = kterl:cur_step(Cursor,[{signal, "stepped"}]).
+{ok, ...}
+6> kterl_result:get_key(kterl:cur_get_key(Cursor)).
+<<"key3">>
+7> kterl:cur_step(Cursor, [{signal, "stepped"}]).
+{error,invalid_cursor}
+'''
+
+@see cursor/1
+@see cur_step/2
+@see cur_step_back/1
+@see cur_step_back/2
+
+%% __endfile__
+%% __file__ cur_get_1.edoc
+@doc
+Calls /rpc/cur_get<p/>
+
+Retrieves the key and value, and if set, the expiration time of the
+record located at the cursor. This function does not instruct the
+server to 'step' the cursor to the next/previous record after the
+call. For this, use {@link cur_get/2} or {@link cur_get/3}.
+
+```
+
+% example:
+
+1> ok = kterl:add(Pid, "New_record", "Value!").
+ok
+2> Cursor = kterl:cursor(Pid).
+...
+3> ok = kterl:cur_jump(Cursor, [{key,"New_record"}]).
+ok
+4> {ok, Res} = kterl:cur_get(Cursor).
+...
+5> kterl_result:get_key(Res).
+<<"New_record">>
+6> kterl_result:get_value(Res).
+<<"Value!">>
+'''
+
+@see cursor/1
+@see cur_get/2
+@see cur_get/3
+
+%% __endfile__
+%% __file__ get_2.edoc
+@doc
+Calls /rpc/get<p/>
+
+Retrieve a key's value from the primary database. The record's
+expiration time, if set, is available in the results.
+
+```
+% example: setting a record with an expiration time 60 seconds in the future:
+
+1> {ok, _} = kterl:set(Pid, "test_exp", <<"60..59..58..">>, [{xt,60}]).
+...
+2> {ok, Res} = kterl:get(Pid, <<"test_exp">>),
+3> kterl_result:get_value(Res).
+<<"60..59..58..">>
+4> kterl_result:get_exptime(Res).
+1332365348
+5> kterl_result:get_exptime_datetime(Res).
+{{2012,3,21},{14,29,8}}
+6> kterl_result:get_exptime_future_seconds(Res).
+29
+'''
+Wait until the record expires...
+```
+7> kterl:get(Pid, <<"test_exp">>).
+{error, no_record}
+'''
+
+If the record does not have an expiration time set, the get_exptime
+functions in kterl_result will return undefined:
+
+```
+1> {ok, _} = kterl:set(Pid, <<"test_key">>, <<"test_value">>).
+...
+2> kterl_result:get_exptime(kterl:get(Pid, "test_key")).
+undefined
+'''
+
+@see get/3
+%% __endfile__
+%% __file__ replace_4.edoc
+@doc Calls /rpc/replace<p/>
+
+Replaces the value of an existing record. Use this call to specify the
+database, to set an expiration time of the updated record, or to
+configure signal/wait parameters.
+
+```
+% example: this updates a record in the "system.kct" database with
+% an expiration time of one hour.
+
+update_system_record(Pid, SystemKey, SystemRecord) ->
+    case kterl:replace(Pid, SystemKey, SystemRecord,
+                       [{database, "system.kct"}, 
+                        {xt, 60 * 60}]) of
+        ok -> ok;
+        {error, no_record} -> throw({error, {no_sys_record, SystemKey}})
+    end.
+'''
+        
+@see replace/2
+@see replace/4
+@see cas/4
+@see cas/3
+
+%% __endfile__
+%% __file__ match_prefix_3.edoc
+@doc
+Calls /rpc/match_prefix<p/>
+
+Retrieves all keys from a optionally specified database that match a
+prefix string. An empty string matches all keys in that
+database. There is a 'max' parameter, which provides the ability to
+limit the number of keys returned by the server. Additionally, this
+call supports the signal wait/broadcast functionality.
+
+``` 
+
+% example: Wait up to 10 minutes for a 'scan_cache' signal on the
+% "cache.kct" database, and retrieve up to 1000 keys that have 
+% the prefix "cache_".
+
+scan_cache(Pid) ->
+    case kterl:match_prefix(Pid, "cache_", [{database, "cache.kct"},
+                                            {max,      1000},
+                                            {wait,     "scan_cache"},
+                                            {waittime, 10 * 60}]) of
+        {ok, Res} ->
+            {ok, kterl_result:get_keys(Res)};
+        Error = {error, _} ->
+            Error
+    end.
+'''
+@see match_prefix/2
+    
+
+%% __endfile__
+%% __file__ status_1.edoc
+@doc Calls /rpc/status<p/>
+Receives miscellaneous status information of the primary database.
+```
+% example:
+
+1> {ok, Res} = kterl:status(Pid),
+...
+2> kterl_result:get_records(Res).
+[{<<"apow">>,<<"8">>},
+ {<<"bnum">>,<<"65536">>},
+ {<<"chksum">>,<<"188">>},
+ {<<"count">>,<<"8">>},
+ {<<"cusage">>,<<"237">>},
+ {<<"dfunit">>,<<"0">>},
+ ... ]
+'''
+@see status/2
+
+%% __endfile__
+%% __file__ set_2.edoc
+@doc Calls /rpc/set<p/>
+Sets the value of a record in the primary database.
+A new record is created if the key doesn't exist.
+```
+% example:
+
+update_user_record(Pid, Record = {_Key, _Value}) ->
+    ok = kterl:set(Pid, Record).
+'''
+@see set/3
+@see set/4
+
+%% __endfile__
+%% __file__ increment_3.edoc
+@doc 
+Calls /rpc/increment<p/>
+
+Adds a number to the numeric integer value of a record, and returns
+the resulting value. It must be used to set an initial value for
+subsequent increment calls.
+
+```
+% example:
+
+1> kterl:get(Pid, "inc_test").
+{error,no_record}.
+2> {ok, Res} = kterl:increment(Pid, "inc_test", 1).
+...
+3> kterl_result:get_num(Res).
+1
+4> kterl_result:get_num(kterl:increment(Pid, "inc_test", -2)).
+-1
+5> kterl_result:get_num(kterl:increment(Pid, "inc_test", 101)).
+100
+'''
+
+The system can simply increment 0 to retrieve the current value, but
+be aware that it'll create the record if it doesn't exist.
+
+```
+6> kterl_result:get_num(kterl:increment(Pid, "inc_test", 0)).
+100
+7> kterl_result:get_value(kterl:get(Pid, "inc_test")).
+<<0,0,0,0,0,0,0,100>>
+'''
+
+Notice: The server is unable to increment a value that was set by a non-increment call:
+
+```
+8> ok = kterl:add(Pid, "inc_fail", 1).
+ok
+9> kterl_result:get_value(kterl:get(Pid, "inc_fail")).
+<<"1">>
+10> kterl:increment(Pid, "inc_fail", 1).
+{error,incompatible_record}
+'''
+
+@see increment/4
+@see increment_double/3
+@see increment_double/4
+
+%% __endfile__
+%% __file__ cur_get_key_3.edoc
+@doc
+Calls /rpc/cur_get_key<p/>
+
+Retrieves the key of the record located at the cursor. If step is
+true, the server will reposition the cursor to an adjacent record
+after the key is retrieved. This function can also interact with the
+server's wait/signal mechanism.
+
+@see cursor/1
+@see cur_get_key/1
+@see cur_get_key/2
+%% __endfile__
+%% __file__ add_2.edoc
+@doc Calls /rpc/add<p/>
+
+Adds a new record to the primary database.
+
+```
+% example:
+
+add_new_record(Pid, Record = {Key, _Value}) ->
+    case kterl:add(Pid, Record) of
+         ok -> 
+             ok;
+         {error, duplicate_key} -> 
+             throw({duplicate_key, Key})
+end.
+'''
+@see add/3
+@see add/4
+
+%% __endfile__
+%% __file__ intro.edoc
+@author Rich Beerman <rbeer@beerman.org>
+@version 1.0.0
+@doc
+kterl is an Erlang interface to the Kyoto Tycoon cache/storage server.
+
+== features ==
+<ul> 
+<li>%100 feature support of Kyoto Tycoon's HTTP and binary protocols.</li>
+<li>Full OTP compliance.</li>
+<li>High performance, robust, and non-blocking protocol handling.</li>
+<li>A documented API that provides a simple, clean, and idiomatic interface.</li>
+</ul>
+
+<p/>Kyoto Tycoon supports standard key/value database calls, such as
+set, add, remove, seize, and so on, but there are specific features
+and behaviors to be aware of while exploring the documentation:
+
+=== binary protocol ===
+
+Clients interact with Kyoto Tycoon through HTTP or a binary protocol,
+kterl supports both methods on the same socket connection. The binary
+calls are {@link bin_set_bulk/2}, {@link bin_get_bulk/2}, {@link
+bin_remove_bulk/2}, and {@link bin_play_script/2}. Although these
+methods are not as feature rich as their HTTP based siblings, they do
+provide significant performance advantages.
+
+=== multiple databases ===
+
+Kyoto Tycoon supports multiple databases and database types, and all
+of kterl's calls have at least one variation that provides the option
+to specify a database to operate on.
+
+<p/>
+
+The HTTP calls accept a database specifier of a string/binary, which
+is the database's filename without the path (such as "test.kct"), or a
+zero-based integer. For example, if ktserver is started as:
+
+``` ktserver /path/to/users.kct /path/to/session.kct '''
+
+The users database can be referred to as {database, "users.kct"} or
+{database, 0}. The session database is {database, 1} or {database,
+"session.kct"}.
+
+<p/>
+
+The binary protocol only supports integer database identifcation, so
+it might be useful to standardize on integer identification in any new
+software that could potentially use both binary and HTTP based
+protocol functions.
+
+=== cursors ===
+
+Kyoto Tycoon implements a well-designed system for interacting with
+its databases through cursors, which are a simple and stateful
+abstraction for traversing and interacting with specific records
+through a pointer.
+
+<p/>
+
+The interface is very easy to understand. First, the software obtains
+a cursor through the use of the {@link cursor/1} call. That cursor
+then must to be positioned to a specific record in a database through
+the use of jump calls such as {@link cur_jump/2} or {@link
+cur_jump_back/2}. Those calls are documented in greater detail below.
+
+<p/>
+
+One simple but important nuance of the cursor interface is the
+difference between the cur_jump and cur_jump_back calls. They both
+support the ability to jump to a specific record located by its key,
+or separately, they can jump to the first or last record in a
+database. The important difference is the jump method influences all
+subsequent automatic cursor stepping operations.
+
+<p/>
+
+As an example, the {@link cur_get/2} function retrieves the key and
+value of a record the cursor points to. It has a boolean 'step'
+parameter, which if true, instructs Kyoto Tycoon to move the cursor to
+an adjacent record after the cursor's record is accessed. If the
+cursor was initially positioned with a cur_jump_back call, the cursor
+will move (or 'step') towards the start of the database.  If the
+cursor was positioned with a cur_jump call, the cursor will step
+towards the end of the database.
+
+<p/>
+
+This functionality is useful if the software needs to iterate through
+the entire database (or a subset from a specific starting key.) Simply
+jump to a starting position using cur_jump to iterate in forward key
+order, or cur_jump_back for reverse key order. Then repeatedly invoke
+an automatic stepping call such as {@link cur_get_key/2} until it
+returns {error,invalid_cursor}. At that point, the database contains
+no additional records for the cursor to step to.
+
+<p/>
+
+A cursor has been invalidated by the server when a cursor call returns
+{error,invalid_cursor}. When this occurs, the cursor is unusable until
+it's repositioned with a jump call.
+
+<p/>
+
+On final note: Cursor traversal order is dependent on the database's
+type. For tree databases, it is ordered by key, and for hash
+databases, by a hashing function. Hash type databases possibly will
+not support cur_step_back calls.
+
+=== signals ===
+
+Kyoto Tycoon provides to its clients an ability to synchronize work
+through the use of signals. Clients can wait for a named signal before
+performing a database operation, and/or broadcast a signal to one or
+more waiting clients after a database operation is finished.
+
+kterl exposes this functionality throughout. The relevant call
+parameters are:
+
+```
+{wait, "signalname"}      Forces the client to block until it receives "signalname".
+
+
+{waittime, NSeconds}      Optional timeout parameter for 'wait', in seconds. If the signal isn't
+                          received within this period, the database operation isn't performed 
+                          and the function returns {error,timed_out}. The default value is 30 seconds.
+
+
+{signal, "signalname"}    The client will send "signalname" to one or all clients after its
+                          database operation is complete.
+
+
+{signalbroad, boolean()}  Optional 'signal' parameter. If set to true, all clients waiting on
+                          "signalname" will receive the signal. Otherwise, it will be received
+                          by the first client to enter a wait state. This default value is false.
+
+'''
+
+kterl calls that are passed a 'signal' parameter will return a count
+of the number of clients that received the signal. This value is
+accessed by {@link kterl_result:get_signaled_count/1}.
+
+
+The Kyoto Tycoon documentation warns that a call waiting on a signal
+occupies a thread, and that it should be used only for monitoring
+records by a few clients.
+
+=== record expiration ===
+
+Kyoto Tycoon has the ability to automatically expire records. kterl
+provides the ability to set an expiration time by using the 'xt'
+parameter on all supported calls, such as {@link set/4}, {@link
+add/4}, {@link replace/4}. The binary protocol {@link bin_set_bulk/2}
+also supports setting an expiration time.
+
+<p/>
+
+The 'xt' parameter accepts two possible values to set an expiration
+time: An integer for the number of seconds the record should exist, or
+an Erlang <a
+href="http://www.erlang.org/doc/man/calendar.html">calendar:datetime()</a>
+value to set an absolute date and time. kterl handles this conversion
+automatically.
+
+<p/>
+
+
+%% __endfile__
+%% __file__ cur_remove_2.edoc
+@doc
+Calls /rpc/cur_remove<p/>
+
+Removes the current record located at the cursor. The cursor is then
+positioned to the next or previous record in the database, depending
+on if the cursor was positioned with cur_step* or cur_step_back*
+functions.
+
+<p/>
+
+If the last (or first) record in the database is removed or seized,
+the cursor is invalidated for future operations until it's
+repositioned with a jump call.
+
+<p/>
+
+This function can interact with the server's signaling mechanism with
+the optional 'wait', 'waittime', 'signal', and 'signalbroad'
+parameters.
+
+@see cursor/1
+@see cur_remove/1
+
+%% __endfile__
+%% __file__ vacuum_2.edoc
+@doc
+
+Calls /rpc/vacuum<p/>
+
+Scans a database and eliminates regions of expired records. Two optional
+parameters to note are 'database', which configures the database to vacuum,
+and 'step', which configures the number of steps in the vacuum operation.
+If 'step' is omitted or equal to 0, the whole database region is scanned.
+Signal/wait operations are available through this call, as well.
+
+```
+% example: waits for "vacuum_database" signal for 2 hours, and then
+% performs a vacuum on the entire "session.kct" database.
+
+wait_vacuum(Pid) ->
+    case kterl:vacuum(Pid, [{database, "session.kct"},
+                            {wait,     "vacuum_database"},
+                            {waittime, 2 * 60 * 60}]) of
+        {ok, _} ->
+            ok;
+        Error = {error, _} ->
+            Error
+    end.
+'''
+@see vacuum/1
+
+
+%% __endfile__
+%% __file__ cur_remove_1.edoc
+@doc
+Calls /rpc/cur_remove<p/>
+
+Removes the current record located at the cursor. The cursor is then
+positioned to the next or previous record in the database, depending
+on if the cursor was positioned with cur_step* or cur_step_back*
+functions. 
+
+<p/>
+
+If the last (or first) record in the database is removed or seized,
+the cursor is invalidated for future operations until it's
+repositioned with a jump call.
+
+```
+% example:
+
+1> kterl:set_bulk(Pid,[{"key1","val1"},{"key2","val2"},{"key3","val3"}]).
+...
+2> Cursor = kterl:cursor(Pid).
+...
+3> ok = kterl:cur_jump(Cursor, [{key, "key2"}]).
+ok
+4> ok = kterl:cur_remove(Cursor),
+ok
+5> kterl_result:get_key(kterl:cur_get(Cursor)).
+<<"key3">>
+'''
+
+@see cursor/1
+@see cur_remove/2
+
+%% __endfile__
+%% __file__ set_4.edoc
+@doc
+Calls /rpc/set<p/>
+
+Sets the value of a record in a specified database, with other
+optional parameters, such as setting the destination database, an
+expiration time, setting, or waiting on a signal.  A new record is
+created if the key doesn't exist.
+
+```
+% example: creates or updates a record in the cache.kct database, with an 
+% expiration time 120 seconds in the future, and then sends the "cache" 
+% signal to all clients waiting for that signal.
+
+add_cache_item(Pid, Key, Value) ->
+     {ok, Res} = kterl:set(Pid, Key, Value, 
+                    [{database, "cache.kct"}, {xt,120},
+                     {signal, "cache"}, {signalbroad, true}]),
+     Signaled = kterl:get_signaled_count(Res),
+     {ok, Signaled}.
+'''
+@see set/2
+@see set/3
+
+%% __endfile__
+%% __file__ append_4.edoc
+@doc 
+Calls /rpc/append<p/>
+
+Appends a value to a record. The record is created if it doesn't exist.
+
+```
+% example: This appends a tag to a user's set of tags, and then sends a 
+% "username_tag" signal to any processes waiting for that signal.
+% It returns {ok, N} where N is the number of clients that received the
+% signal.
+
+update_user_tags(Pid, Username, Tag) ->
+    {ok,Res} = kterl:append(Pid, Username, [$| | Tag],
+                            [{database, "tags.kct"},
+                             {signal, Username ++ "_" ++ Tag},
+                             {signalbroad, true}]),
+    {ok, kterl_result:get_signal_count(Res)}.
+'''
+@see append/3
+
+
+%% __endfile__
+%% __file__ match_prefix_2.edoc
+@doc
+Calls /rpc/match_prefix<p/>
+
+Retrieves all keys from the primary database that match a prefix
+string. An empty prefix string returns all keys in a database. If the
+number of key results need to be restricted, use {@link match_prefix/3} with
+the 'max' parameter.
+
+```
+% example:
+
+1> Records = [{K ++ integer_to_list(V), V} || K <- ["key_a", "key_b", "key_c"] || V <- [1,2,3,4]].
+...
+2> {ok, SetRes} = kterl:set_bulk(Pid, Recs).
+...
+3> kterl_result:get_num(SetRes).
+12
+4> {ok, Res} = kterl:match_prefix(Pid, <<"key_c">>).
+...
+5> kterl_result:get_keys(Res).
+[<<"key_c1">>,<<"key_c2">>,<<"key_c3">>,<<"key_c4">>]
+6> kterl_result:get_keys(kterl:match_prefix(Pid, <<"key_d">>)).
+[]
+7> kterl_result:get_keys(kterl:match_prefix(Pid, "")).
+[<<"key_a1">>,<<"key_a2">>,<<"key_a3">>,<<"key_a4">>,
+ <<"key_b1">>,<<"key_b2">>,<<"key_b3">>,<<"key_b4">>,
+ <<"key_c1">>,<<"key_c2">>,<<"key_c3">>,<<"key_c4">>]
+'''
+@see match_prefix/3
+@see match_regex/2
+@see match_regex/3
+
+%% __endfile__
+%% __file__ increment_4.edoc
+@doc 
+Calls /rpc/increment<p/>
+
+Adds a number to the numeric integer value of a record, and returns
+the resulting value. It must be used to set an initial value for
+subsequent increment calls.
+
+```
+% example: this function updates a resource counter in the "resource.kct" database.
+% the record will automatically expire in one minute after the final increment call is
+% performed on this key.
+
+inc_resource_count(Pid, ResourceName) ->
+    ok = kterl:increment(Pid, ResourceName, 1, 
+                         [{database, "resource.kct"},
+                          {xt, 60}]).
+'''
+@see increment/3
+@see increment_double/3
+@see increment_double/4
+
+%% __endfile__
+%% __file__ remove_2.edoc
+@doc
+Calls /rpc/remove<p/>
+
+Removes a record from the primary database.
+```
+% example:
+
+1> ok = kterl:set(Pid, "test", "record").
+ok
+2> kterl_result:get_value(kterl:get(Pid, <<"test">>)).
+<<"record">>
+3> ok = kterl:remove("test").
+ok
+4> kterl:get(Pid,"test").
+{error,no_record}
+'''
+See the cas() function to perform an atomic value compare-and-remove operation.
+@see remove/3
+@see cas/3
+
+%% __endfile__
+%% __file__ cur_get_2.edoc
+@doc
+Calls /rpc/cur_get<p/>
+
+Retrieves the key and value, and if set, the expiration time of the
+record located at the cursor. If 'step' is set to true, the server
+will reposition the cursor to an adjacent record after the key and
+value are retrieved.
+
+```
+% example:
+
+1> ok = kterl:clear(Pid).
+ok
+2> kterl:set_bulk(Pid,[{"key1","val1"},{"key2","val2"},{"key3","val3"}]).
+...
+3> Cursor = kterl:cursor(Pid).
+...
+4> ok = kterl:cur_jump(Cursor, [{key,"key2"}]).
+ok
+5> {ok, Res} = kterl:cur_get(Cursor, true).
+...
+6> kterl_result:get_key(Res).
+<<"key2">>
+7> kterl_result:get_value(Res).
+<<"val2">>
+8> {ok, Res1} = kterl:cur_get(Cursor, true).
+...
+9> kterl_result:get_key(Res1).
+<<"key3">>
+10> kterl_result:get_value(Res1).
+<<"val3">>
+11> {error,invalid_cursor} = kterl:cur_get(Cursor, true).
+{error,invalid_cursor}
+'''
+
+@see cursor/1
+@see cur_get/1
+@see cur_get/3
+
+
+%% __endfile__
+%% __file__ get_bulk_3.edoc
+@doc
+
+Calls /rpc/get_bulk<p/>
+
+Retrieves multiple records at once. Optionally, the database and/or
+signal operations, and an option to force atomicity can be
+specified. {@link bin_get_bulk/2} is significantly faster than this call, but
+it lacks the ability to configure signal operations, atomicity, or
+specify the destination database as a string.
+
+```
+
+% example: waits up to 60 seconds for a "stats_avail" signal, and then attempts to
+% retrieve 10000 records in a bulk operation. it returns the records that were available.
+
+get_bulk_demo(Pid) ->
+    Keys = ["status_" ++ integer_to_list(N) || N <- lists:seq(1,10000)],
+    case kterl:get_bulk(Pid, Keys, [{database, "status.kct"},
+                                    {wait,     "stats_avail"},
+                                    {waittime, 60}]) of
+        {ok, Res} ->
+            {ok, kterl_result:get_records(Res)};
+        Error = {error, _} ->
+            Error
+    end.
+'''
+@see get_bulk/2
+@see bin_get_bulk/2
+
+
+%% __endfile__
+%% __file__ play_script_4.edoc
+@doc Calls /rpc/play_script<p/>
+Invokes a procedure of the server's script language extension.
+```
+% example:
+% this plays a script without args, and then uses the server's
+% signaling mechanism to notify all other clients waiting for that signal.
+% it returns the script's output and the number of clients that received
+% the signal.
+
+-spec play_kt_script(Pid::pid(), Script::binary()) ->
+      {ok, [{Key::binary(), Value::binary()}], non_neg_integer()}.
+
+play_kt_script(Pid, Script) ->
+    {ok, Res} = kterl:play_script(Pid, Script, [], 
+                   [{signal, "script"}, {signalbroad, true}]).
+    Records  = kterl:get_records(Res),
+    Signaled = kterl:get_signaled_count(Res),
+    {ok, Records, Signaled}.
+'''
+@see play_script/2
+@see play_script/3
+@see bin_play_script/3
+
+%% __endfile__
+%% __file__ report_1.edoc
+@doc Calls /rpc/report<p/>
+Returns a set of key,value pairs containing server information.
+```
+
+1> {ok, Res} = kterl:report(Pid).
+...
+2> kterl_result:get_records(Res).
+[{<<"cnt_get">>,<<"13">>},
+ {<<"cnt_get_misses">>,<<"4">>},
+ {<<"cnt_misc">>,<<"0">>},
+ {<<"cnt_remove">>,<<"0">>},
+ {<<"cnt_remove_misses">>,<<"0">>},
+ ... ]
+'''
+
+%% __endfile__
+%% __file__ synchronize_2.edoc
+@doc Calls /rpc/synchronize<br/>
+
+Synchronize a specified database's updated contents with the file and
+the device. Refer to the Kyoto Tycoon documentation for more
+information on the hard and command arguments.
+
+```
+% example:
+ 
+synchronize_kt_database(Pid, Database) ->
+    case kterl:synchronize(Pid, [{database, Database},{hard, true}]) of
+        {ok,_} -> ok;
+        Err -> Err
+    end.
+
+1> synchronize_kt_database(Pid, "database.kct").
+ok
+'''
+@see synchronize/1
+
+%% __endfile__
+%% __file__ tune_replication_2.edoc
+@doc Calls /rpc/tune_replication<p/>
+Sets the server's replication configuration. See the Kyoto Tycoon documentation for further information.
+
+%% __endfile__
+%% __file__ increment_double_4.edoc
+@doc
+Calls /rpc/increment_double<p/>
+
+Adds a number to the numeric double value of a record, and returns the
+resulting value. It must be used to set an initial value for
+subsequent increment_double calls.
+
+```
+% example: this function updates a counter in the "sysstat.kct" database.
+
+inc_sys_counter(Pid, Key, Success) ->
+    Value = case Success of 
+                true -> 2.3;
+                false -> -1.1
+            end,
+    ok = kterl:increment_double(Pid, Key, Value, [{database, "sysstat.kct"}]).
+'''
+
+@see increment/3
+@see increment/4
+@see increment_double/3
+
+%% __endfile__
+%% __file__ clear_2.edoc
+@doc Calls /rpc/clear<p/>
+Removes all records from a specified database.
+```
+% example:
+
+clear_kt_database(Pid, Database) ->
+    ok = kterl:clear(Pid, [{database, Database}]).
+
+2> clear_kt_database(Pid, 1).
+ok
+3> clear_kt_database(Pid, "database.kct").
+ok
+'''
+@see clear/1
+
+%% __endfile__
+%% __file__ cur_seize_1.edoc
+@doc
+Calls /rpc/cur_seize<p/>
+
+Returns the key, value, and if set, the expiration time of the record
+located at the cursor. The record is then removed. If the last (or
+first, depending on cur_jump/cur_jump_back step order) record is
+removed or seized, the cursor is invalidated for future operations
+until it's repositioned with a jump call.
+
+```
+% example:
+
+1> ok = kterl:clear(Pid).
+ok
+2> {ok,_} = kterl:set_bulk(Pid, [{"key1","val1"}, {"key2","val2"}, {"key3","val3"}]).
+...
+3> Cursor = kterl:cursor(Pid).
+...
+4> ok = kterl:cur_jump(Cursor, [{key,"key2"}]).
+ok
+5> {ok,Res1} = kterl:cur_seize(Cursor).
+...
+6> kterl:get_key(Res1).
+<<"key2">>
+7> kterl:get_value(Res1).
+<<"val2">>
+8> {ok, Res2} = kterl:cur_seize(Cursor).
+...
+9> kterl:get_key(Res2).
+<<"key3">>
+10> kterl:get_value(Res2).
+<<"key3">>
+11> kterl:cur_get(Cursor).
+{error,invalid_cursor}
+12> ok = kterl:cur_jump(Cursor, [{key,"key1"}]).
+ok
+13> {ok, Res3} = kterl:cur_get(Cursor).
+...
+14> kterl_result:get_key(Res3).
+<<"key1">>
+15> kterl_result:get_value(Res3).
+<<"val1">>
+16> {ok,_} = kterl:cur_seize(Cursor).
+...
+'''
+@see cursor/1
+@see cur_seize/2
+
+
+
+%% __endfile__
+%% __file__ remove_bulk_3.edoc
+@doc
+
+Calls /rpc/remove_bulk<p/>
+
+Removes multiple records at once, returning the numbers of records
+stored. Optionally, the database and/or signal operations, and an
+option to force atomicity can be specified. {@link bin_remove_bulk/2} is
+significantly faster than this call, but it lacks the ability to
+configure signal operations, atomicity, or specify the destination
+database as a string.
+
+```
+% example: This function attempts to remove records from the "status.kct"
+% database. It returns the number of records removed.
+
+remove_status_record(Pid) ->
+    Keys = ["status_" ++ integer_to_list(N) || N <- lists:seq(1,1000)],
+    case kterl:remove_bulk(Pid, Keys, [{database, "status.kct"}]) of
+        {ok, Res} ->
+            {ok, kterl_result:get_num(Res)};
+        Error = {error, _} ->
+            Error
+end.
+'''
+
+@see remove_bulk/2
+@see bin_remove_bulk/2
+    
+%% __endfile__
+%% __file__ cur_set_value_3.edoc
+@doc
+Calls /rpc/cur_set_value<p/>
+
+Sets the value of the record located at the cursor. When 'step' is
+true, the cursor is positioned to the next or previous record,
+depending on if the cursor was positioned with a cur_jump* or
+cur_jump_back* call.
+
+```
+% example:
+
+1> kterl:set_bulk(Pid,[{"key1","val1"},{"key2","val2"},{"key3","val3"}]).
+...
+2> Cursor = kterl:cursor(Pid).
+...
+3> ok = kterl:cur_jump(Cursor, [{key, "key2"}]).
+ok
+4> kterl_result:get_value(kterl:cur_get_value(Cursor)).
+<<"val2">>
+5> ok = kterl:cur_set_value(Cursor, <<"new val2">>, true).
+ok
+6> kterl_result:get_value(kterl:cur_get_value(Cursor)).
+<<"val3">>
+7> ok = kterl:cur_step_back(Cursor).
+ok
+8> kterl_result:get_value(kterl:cur_get_value(Cursor)).
+<<"new val2">>
+'''
+
+@see cursor/1
+@see cur_set_value/1
+@see cur_set_value/2
+@see cur_set_value_opt/2
+
+
+%% __endfile__
+%% __file__ vacuum_1.edoc
+@doc
+
+Calls /rpc/vacuum<p/>
+
+Scans the primary database and eliminates regions of expired records.
+
+```
+1> ok = kterl:vacuum(Pid).
+ok
+'''
+@see vacuum/2
+%% __endfile__
+%% __file__ get_3.edoc
+@doc
+Calls /rpc/get<p/>
+
+Retrieve a key's value, optionally specifying a database and signal
+parameters. The record's expiration time, if set, is available in the
+results.
+
+=== example 1 ===
+```
+% retrieve the user record from the users database.
+get_user(Pid, Username) ->
+    case kterl:get(Pid, Username, [{database, "users.kct"}]) of
+        {ok, Res} ->
+            {ok, kterl_result:get_value(Res)};
+        {error, timed_out} ->
+            throw({error, {no_user_record, Username}})
+    end.
+'''
+
+=== example 2 === 
+
+``` 
+
+% another process will create an auto-expiring status record in the
+% stats database and then will send a "stats_set" signal. get_stats_record 
+% will wait for the signal for up to 60 seconds, and when it's received,
+% it will retrieve the status value and the record's expiration time.
+
+get_stats_record(Pid) ->
+    case kterl:get(Pid, "status", 
+                   [{database, "stats.kct"},
+                    {wait,     "stats_set"},
+                    {waittime, 60}]) of
+        {ok, Res} ->
+            Value = kterl_result:get_value(Res),
+            Exptime = kterl_result:get_exptime_datetime(Res),
+            {ok, Value, Exptime};
+        {error, Err} when Err =:= no_record; Err =:= timed_out ->
+            throw({error, {get_stats, Err}})
+end.
+'''
+@see get/2
+
+
+%% __endfile__
+%% __file__ set_bulk_3.edoc
+@doc
+
+Calls /rpc/set_bulk<p/>
+
+Stores multiple records at once, returning the number of records
+stored. Optionally, the database and/or signal operations, and an
+option to force atomicity can be specified. {@link bin_set_bulk/2} is
+significantly faster than this call, but it lacks the ability to
+configure signal operations, atomicity, or specify the destination
+database as a string.
+
+```
+% example: This function creates several bogus status records in the "status.kct" database.
+% after the records are added, a signal "status_available" is broadcast to all listeners.
+% the number of processes waiting on that signal is returned, along with the number of
+% records added.
+
+add_status_records(Pid) ->
+    Sttrecs = [{<<"status_1">>,<<"aGVsbG8gd29ybGQsIHRoaXMgaXMgYSB0ZXN0Lg==">>}
+               {<<"status_2">>,<<"ZG9uJ3QgcGFuaWMh">>},
+               {<<"status_3">>,<<"Li4uIHRoZSBlbmQgLi4u">>}],
+    case kterl:set_bulk(Pid, Sttrecs, [{database, "status.kct"},
+                                       {xt, 60 * 60 * 24},
+                                       {signal, "status_available"},
+                                       {signalbroad, true},
+                                       {atomic, true}]) of
+        {ok, Res} ->
+            RecsAdded = kterl_result:get_num(Res),
+            NSignaled = kterl_result:get_signaled_count(Res),
+            {ok, RecsAdded, NSignaled};
+        Err = {error, _} ->
+            Err
+    end.
+'''
+@see set_bulk/2
+@see bin_set_bulk/2
+    
+%% __endfile__
+%% __file__ seize_3.edoc
+@doc
+
+Calls /rpc/seize<p/>
+
+Retrieve and remove a record in one atomic operation, with the option
+to specify a database and/or perform signal operations. The call
+returns the record's value, and if set, the record's expiration time.
+
+```
+% example: a process in the cluster intermittently creates a status record in the status.kct
+% database, and then broadcasts a 'status_ready' signal. this function acts as a consumer. 
+% it waits for that signal, seizes the record, and then performs some processing on the 
+% record's value.
+
+get_status_record(Pid) ->
+    case kterl:seize(Pid, "sys_status", 
+                     [{database, "status.kct"},
+                      {wait,     "status_ready"},
+                      {waittime, 10}]) of
+        {ok, Res} ->
+            process_status(kterl_result:get_value(Res)),
+            get_status_record(Pid);
+        {error, timed_out} ->
+            log("Status not ready after 10 seconds"),
+            get_status_record(Pid);
+        {error, no_record} ->
+            throw({error, {get_status, no_record}})
+end.
+'''
+
+@see seize/2
+
+%% __endfile__
+%% __file__ cur_seize_2.edoc
+@doc
+Calls /rpc/cur_seize<p/>
+
+Returns the key, value, and if set, the expiration time of the record
+located at the cursor. The record is then removed. If the last (or
+first, depending on cur_jump/cur_jump_back step order) record is
+removed or seized, the cursor is invalidated for future operations
+until it's repositioned with a jump call.
+
+@see cursor/1
+@see cur_seize/1
+%% __endfile__
+%% __file__ void_1.edoc
+@doc Calls /rpc/void<p/>
+Pings the server.
+```
+% example:
+
+is_kt_connected(Pid) ->
+    ok == kterl:void(Pid).
+'''
+
+%% __endfile__
+%% __file__ cur_jump_2.edoc
+@doc
+Calls /rpc/cur_jump<p/>
+
+Positions the record in a database. This function accepts two optional
+parameters: 'key' and 'database'. If 'key' is set, the cursor will be
+positioned at that key; otherwise, it'll position the cursor to the
+first record of a database. The 'database' parameter specifies the
+target database. If it's not set, the server defaults to the primary
+database.
+
+<p/>
+
+After this call, the cursor will be positioned to the <em>next</em>
+record in all subsequent calls that automatically 'step' the cursor.
+
+<p/>
+
+To simplify the return status interface, this function does not
+support the 'wait', 'waittime', 'signal', or 'signalbroad'
+parameters. For these, use {@link cur_jump_opt/2}.
+
+```
+% example:
+
+1> kterl:set_bulk(Pid,[{"key1","val1"},{"key2","val2"},{"key3","val3"}]).
+...
+2> Cursor = kterl:cursor(Pid).
+3> kterl:cur_jump(Cursor,[{key, "key3"}]).
+ok
+4> kterl_result:get_key(kterl:cur_get_key(Cursor)).
+<<"key3">>
+5> kterl:cur_jump(Cursor).
+6> kterl_result:get_key(kterl:cur_get_key(Cursor)).
+<<"key1">>
+'''
+@see cursor/1
+@see cur_jump/1
+@see cur_jump_back/1
+@see cur_jump_back/2
+@see cur_jump_opt/2
+@see cur_jump_back_opt/2
+
+%% __endfile__
+%% __file__ match_regex_3.edoc
+@doc
+Calls /rpc/match_regex<p/>
+
+Retrieves all keys from a database that match a regular expression. An
+empty regex parameter returns all keys in a database. The optional
+parameter 'max' can be used to limit the number of results. This call
+also supports the signal/wait signaling mechanism.
+
+```
+% example: the database file 'dictionary.kct' was populated with
+% an english wordlist. Retrieve words that match a regular expression.
+
+match_dict(Pid, Regex) ->
+    {ok, Res} = kterl:match_regex(Pid, Regex, [{database, "dictionary.kct"}]),
+    kterl_result:get_keys(Res).
+
+1> match_dict(Pid, "(^c..$|^(a|z).$)").
+[<<"ad">>,<<"ah">>,<<"am">>,<<"an">>,<<"as">>,<<"at">>,
+ <<"ax">>,<<"ay">>,<<"cab">>,<<"cad">>,<<"cam">>,<<"can">>,
+ <<"cap">>,<<"car">>,<<"cat">>,<<"caw">>,<<"chi">>,<<"cob">>,
+ <<"cod">>,<<"cog">>,<<"con">>,<<"coo">>,<<"cop">>,<<"cot">>,
+ <<"cow">>,<<"cox">>,<<"coy">>,<<"cry">>,<<...>>|...]
+2> length(match_dict(Pid, "")).
+99183
+'''
+@see match_regex/2
+
+%% __endfile__
+%% __file__ seize_2.edoc
+@doc
+
+Calls /rpc/seize<p/>
+
+Retrieve and remove a record from the primary database in one atomic
+operation. The call returns the record's value, and if set, the
+record's expiration time.
+
+```
+1> ok = kterl:set(Pid, <<"key">>, <<"value">>, [{xt, 10}]).
+ok
+2> {ok, Res} = kterl:seize(Pid, <<"key">>).
+...
+3> kterl_result:get_value(Res).
+<<"value">>
+4> kterl_result:get_exptime_future_seconds(Res).
+9
+5> kterl:seize(Pid, <<"key">>).
+{error, no_record}.
+'''
+@see seize/3
+
+
+%% __endfile__
+%% __file__ play_script_3.edoc
+@doc Calls /rpc/play_script<br/>
+Invokes a procedure of the server's script language extension.
+```
+% example:
+
+play_kt_script(Pid, Script, Args) ->
+    {ok, Res} = kterl:play_script(Pid, Script, Args),
+    kterl_result:get_records(Res).
+ 
+1> play_kt_script(Pid, "scriptname", [{"arg1","val1"},{"arg2"},{"val2"}]).
+[{<<"result_1_key">>,<<"result_1_value">>}},
+ {<<"result_2_key">>,<<"result_2_value">>}]
+'''
+@see play_script/2
+@see play_script/4
+@see bin_play_script/3
+
+%% __endfile__
+%% __file__ remove_3.edoc
+@doc
+Calls /rpc/remove<p/>
+
+Removes a record, with the option to specify a database and/or perform signal operations.
+
+```
+% contrived example: add a record to the stats database with a 10 second
+% expiration time. on success, send a signal that it was added. wait an
+% hour for another process to collect that record, and then remove it.
+
+write_status(Pid, Stats) ->
+    {ok, Res} = kterl:set(Pid, "stats_1234", Stats, 
+                          [{database, "stats.kct"},
+                           {xt,       10}, 
+                           {signal,   "stats_ready"}]),
+
+    %% ensure the signal was collected
+    true = kterl_result:get_signaled_count(Res) > 0,
+
+    case kterl:remove(Pid, "stats_1234",
+                      [{database, "stats.kct"},
+                       {wait,     "stats_collected"},
+                       {waittime, 60 * 60}]) of
+        {ok, _} -> 
+            ok;
+        {error, Res} when Res =:= timed_out; Res =:= no_record ->
+            throw({error, {dump_status, Err}})
+    end.
+'''
+@see remove/2
+@see cas/3
+
+                         
+%% __endfile__
+%% __file__ synchronize_1.edoc
+@doc Calls /rpc/synchronize<p/>
+Synchronize the primary database's updated contents with the file and the device.
+```
+% example:
+
+1> kterl:synchronize(Pid).
+ok
+'''
+@see synchronize/2
+
+%% __endfile__
+%% __file__ set_bulk_2.edoc
+@doc
+
+Calls /rpc/set_bulk<p/>
+
+Stores multiple records to the primary database at once, returning the
+number of records stored.  {@link bin_set_bulk/2} is significantly faster than
+this call.
+
+```
+% example:
+
+1> Records = [{"key1","val1"}, {<<"key2">>, <<"val2">>}, {"key3", 1234}, {"key4",1.23}].
+...
+2> {ok, Res} = kterl:set_bulk(Pid, Records).
+...
+3> kterl_result:get_num(Res).
+4
+...
+4> kterl_result:get_records(kterl:get_bulk(Pid, [Key || {Key,_} <- Records])).
+[{<<"key1">>,<<"val1">>},
+ {<<"key2">>,<<"val2">>},
+ {<<"key3">>,<<"1234">>},
+ {<<"key4">>,<<"1.230000">>}]
+'''
+@see set_bulk/3
+@see bin_set_bulk/2
+%% __endfile__
+%% __file__ echo_2.edoc
+@doc Calls /rpc/echo<p/>
+The server will echo the key,value pairs passed to this call. 
+```
+% example:
+
+1> {ok, Res} = kterl:echo(Pid, [{"hello","world"}]),
+2> [{<<"hello">>, <<"world">>}] = kterl_result:get_records(Res).
+'''
+
+%% __endfile__
+%% __file__ cur_get_value_1.edoc
+@doc
+Calls /rpc/cur_get_value<p/>
+
+Retrieves the value of the record located at the cursor. This function
+does not instruct the server to 'step' the cursor to the next/previous
+record after the call. For this, use {@link cur_get_value/2} or {@link
+cur_get_value/3}.
+
+```
+% example:
+
+1> ok = kterl:clear(Pid).
+ok
+2> ok = kterl:add(Pid, <<"key">>, <<"value">>).
+ok
+3> Cursor = kterl:cursor(Pid).
+...
+4> ok = kterl:cur_jump(Cursor).
+ok
+5> kterl_result:get_value(kterl:cur_get_value(Cursor)).
+<<"value">>
+6> kterl_result:get_key(kterl:cur_get_key(Cursor)).
+<<"key">>
+
+'''
+@see cursor/1
+@see cur_get_value/2
+@see cur_get_value/3
+
+%% __endfile__
+%% __file__ cursor_1.edoc
+@doc
+
+Returns a cursor handle for all subsequent cur_* calls. The cursor
+handle retains the process id of the connection handler passed to this
+function.
+
+@see release_cursor/1
+@see cur_jump/1
+@see cur_jump/2
+@see cur_jump_back/1
+@see cur_jump_back/2
+@see cur_step_back/1
+@see cur_set_value/2
+@see cur_set_value/3 
+@see cur_remove/1
+@see cur_get_key/1
+@see cur_get_key/2
+@see cur_get_value/1
+@see cur_get_value/2
+@see cur_get/2
+@see cur_seize/1
+
+%% __endfile__
+%% __file__ replace_2.edoc
+@doc Calls /rpc/replace<p/>
+
+Replaces the value of an existing record in the primary database.
+
+```
+% example:
+
+1> Record1 = {<<"key">>, <<"value">>}.
+2> Record2 = {<<"key">>, <<"new value">>}.
+
+3> ok = kterl:set(Pid, Record1).
+ok
+4> {ok, Res} = kterl:get(Pid <<"key">>).
+...
+5> kterl_result:get_value(Res).
+<<"value">>
+6> ok = kterl:replace(Pid, Record2).
+ok
+7> {ok, Res1} = kterl:get(Pid, <<"key">>).
+...
+8> kterl_result:get_value(Res).
+<<"new value">>
+9> kterl_replace(Pid, {"new_record","new_value"}).
+{error,no_record}
+'''
+@see replace/3
+@see replace/4
+@see cas/4
+@see cas/3
+
+%% __endfile__
+%% __file__ cur_step_back_1.edoc
+@doc
+Calls /rpc/cur_step_back<p/>
+
+Positions the cursor to the previous record.
+
+```
+% example:
+
+1> kterl:set_bulk(Pid,[{"key1","val1"},{"key2","val2"},{"key3","val3"}]).
+...
+2> Cursor = kterl:cursor(Pid).
+3> ok = kterl:cur_jump(Cursor,[{key, "key2"}]).
+ok
+4> kterl_result:get_key(kterl:cur_get_key(Cursor)).
+<<"key2">>
+5> ok = kterl:cur_step_back(Cursor).
+ok
+6> kterl_result:get_key(kterl:cur_get_key(Cursor)).
+<<"key1">>
+7> kterl:cur_step_back(Cursor).
+{error,invalid_cursor}
+'''
+
+@see cursor/1
+@see cur_step/1
+@see cur_step/2
+@see cur_step_back/2
+%% __endfile__
+%% __file__ get_bulk_2.edoc
+@doc
+
+Calls /rpc/get_bulk<p/>
+
+Retrieves multiple records at once. {@link bin_get_bulk/2} is significantly faster than this call.
+
+```
+% example:
+
+1> Records = [{"key1","val1"}, {<<"key2">>, <<"val2">>}, {"key3", 1234}, {"key4",1.23}].
+...
+2> {ok, _} = kterl:set_bulk(Pid, Records).
+...
+3> kterl_result:get_records(kterl:get_bulk(Pid, ["missing_key" | [Key || {Key,_} <- Records]])).
+[{<<"key1">>,<<"val1">>},
+ {<<"key2">>,<<"val2">>},
+ {<<"key3">>,<<"1234">>},
+ {<<"key4">>,<<"1.230000">>}]
+'''
+@see get_bulk/3
+@see bin_get_bulk/2
+
+%% __endfile__
+%% __file__ cas_4.edoc
+@doc 
+Calls /rpc/cas<p/>
+
+Performs an atomic record value compare-and-swap. Updates the record's
+old value. The call will fail if the key doesn't exist, or if the
+value in the database does not match the OldValue.
+
+```
+% example:
+
+1> kterl:get(Pid, "cas_test").
+{error,no_record}.
+2> kterl:cas(Pid, "cas_test", "old value", "new value").
+{error,expired_value}.
+3> ok = kterl:add(Pid, "cas_test", <<"old value">>).
+ok
+4> kterl_result:get_value(kterl:get(Pid, "cas_test")).
+<<"old value">>
+5> kterl:cas(Pid, "cas_test", "Bogus old value", "new value").
+{error,expired_value}.
+6> ok = kterl:cas(Pid, "cas_test", "old value", "new value").
+ok
+7> kterl_result:get_value(kterl:get(Pid, "cas_test")).
+<<"new value">>
+'''
+
+@see cas/3
+
+%% __endfile__
+%% __file__ add_3.edoc
+@doc Calls /rpc/add<p/>
+Adds a new record to the primary database.
+```
+% example:
+
+1> ok = kterl:add(Pid, <<"key">>, <<"value">>).
+ok
+2> kterl:add(Pid, <<"key">>, <<"value">>).
+{error, duplicate_key}
+'''
+@see add/2
+@see add/4
+
+%% __endfile__
+%% __file__ set_3.edoc
+@doc
+Calls /rpc/set<p/>
+Sets the value of a record in the primary database. A new record is created if the key doesn't exist.
+```
+% example:
+
+update_user_record(Pid, Key, Value) ->
+    ok = kterl:set(Pid, Key, Value).
+'''
+@see set/2
+
+
+%% __endfile__
+%% __file__ cur_jump_back_opt_2.edoc
+@doc 
+Calls /rpc/cur_jump_back<p/>
+
+Positions the record in a database. Like {@link cur_jump_back/2}, this
+function accepts the optional 'key' and 'database' parameters. In
+addition to these, this function accepts 'wait', 'waittime', 'signal',
+and 'signalbroad' parameters, to interact with the signaling
+mechanisms on the server.
+
+<p/>
+
+After this call, the cursor will be positioned to the
+<em>previous</em> record in all subsequent calls that automatically
+'step' the cursor.
+
+@see cur_jump/1
+@see cur_jump/2
+@see cur_jump_opt/2
+@see cur_jump_back/1
+@see cur_jump_back/2
+
+%% __endfile__
+%% __file__ cur_set_value_opt_2.edoc
+@doc 
+Calls /rpc/cur_set_value<p/>
+
+Sets the value of the record located at the cursor. Set 'step' to true
+for the cursor to step to an adjacent record after the value is
+set. This function can also interact with the server's signaling
+mechanism with the optional 'wait', 'waittime', 'signal', and
+'signalbroad' parameters.
+
+```
+% example:
+
+1> kterl:set_bulk(Pid,[{"key1","val1"},{"key2","val2"},{"key3","val3"}]).
+...
+2> Cursor = kterl:cursor(Pid).
+...
+3> ok = kterl:cur_jump(Cursor, [{key, "key2"}]).
+ok
+4> kterl_result:get_value(kterl:cur_get_value(Cursor)).
+<<"val2">>
+5> {ok,Res} = kterl:cur_set_value_opt(Cursor, [{step, true}, {value, "new val2"}, {signal, "cursor_set"}]).
+{ok, ...}
+6> kterl_result:get_signaled_count(Res).
+0
+7> kterl_result:get_value(kterl:cur_get_value(Cursor)).
+<<"val3">>
+8> ok = kterl:cur_step_back(Cursor).
+ok
+9> kterl_result:get_value(kterl:cur_get_value(Cursor)).
+<<"new val2">>
+'''
+
+@see cursor/1
+@see cur_set_value/1
+@see cur_set_value/2
+@see cur_set_value/3
+@see cur_set_value_opt/2
+
+
+%% __endfile__
+%% __file__ increment_double_3.edoc
+@doc
+Calls /rpc/increment_double<p/>
+
+Adds a number to the numeric double value of a record, and returns the
+resulting value. It must be used to set an initial value for
+subsequent increment_double calls.
+
+```
+% example:
+
+1> kterl:get(Pid, "incd_test").
+{error,no_record}
+2> {ok, Res} = kterl:increment_double(Pid, "incd_test", 5.2).
+...
+3> kterl_result:get_num(Res).
+5.2
+4> kterl_result:get_num(kterl:increment_double(Pid, "incd_test", -6.2)).
+-1.0
+5> kterl_result:get_num(kterl:increment_double(Pid, "incd_test", 1.01)).
+0.01
+'''
+
+The system can simply increment 0 to retrieve the current value, but
+notice that it'll create the record if it doesn't exist.
+
+```
+6> kterl_result:get_num(kterl:increment_double(Pid, "incd_test", 0)).
+0.01
+7> kterl_result:get_value(kterl:get(Pid, "incd_test")).
+<<0,0,0,0,0,0,0,0,0,0,9,24,78,114,160,0>>
+'''
+
+Notice: The server is unable to increment a value that was set by a non-increment call:
+
+```
+8> ok = kterl:add(Pid, "incd_fail", 1.0).
+ok
+9> kterl_result:get_value(kterl:get(Pid, "incd_fail")).
+<<"1.000000">>
+10> kterl:increment(Pid, "incd_fail", 1.0).
+{error,incompatible_record}
+'''
+
+@see increment/3
+@see increment/4
+@see increment_double/4
+
+
+%% __endfile__
+%% __file__ replace_3.edoc
+@doc Calls /rpc/replace<p/>
+
+Replaces the value of an existing record in the primary database.
+
+```
+% example:
+
+update_user_record(Pid, Username, UserRecord) ->
+    case kterl:replace(Pid, Username, UserRecord) of
+        ok -> ok;
+        {error, no_record} -> throw({error, {no_user, Username}})
+    end.
+'''
+        
+@see replace/2
+@see replace/4
+@see cas/4
+@see cas/3
+
+
+%% __endfile__
+%% __file__ cur_step_1.edoc
+@doc
+Calls /rpc/cur_step<p/>
+
+Positions the cursor to the next record.
+
+```
+% example:
+
+1> kterl:set_bulk(Pid,[{"key1","val1"},{"key2","val2"},{"key3","val3"}]).
+...
+2> Cursor = kterl:cursor(Pid).
+...
+3> ok = kterl:cur_jump(Cursor,[{key, "key2"}]).
+ok
+4> kterl_result:get_key(kterl:cur_get_key(Cursor)).
+<<"key2">>
+5> ok = kterl:cur_step(Cursor).
+ok
+6> kterl_result:get_key(kterl:cur_get_key(Cursor)).
+<<"key3">>
+7> kterl:cur_step(Cursor).
+{error,invalid_cursor}
+'''
+
+@see cursor/1
+@see cur_step/2
+@see cur_step_back/1
+@see cur_step_back/2
+
+%% __endfile__
+%% __file__ remove_bulk_2.edoc
+@doc
+
+Calls /rpc/remove_bulk<p/>
+
+Removes multiple records at once, returning the number of record
+deletions. {@link bin_remove_bulk/2} is significantly faster than this call.
+
+```
+% example:
+
+1> Records = [{"key1","val1"}, {<<"key2">>, <<"val2">>}, {"key3", 1234}, {"key4",1.23}].
+...
+2> {ok, _} = kterl:set_bulk(Pid, Records).
+...
+3> kterl_result:get_records(kterl:get_bulk(Pid, [Key || {Key,_} <- Records])).
+[{<<"key1">>,<<"val1">>},
+ {<<"key2">>,<<"val2">>},
+ {<<"key3">>,<<"1234">>},
+ {<<"key4">>,<<"1.230000">>}]
+4> {ok, Res} = kterl:remove_bulk(Pid, [Key || {Key,_} <- Records]).
+...
+5> kterl_result:get_num(Res).
+4
+6> kterl_result:get_records(kterl:get_bulk(Pid, [Key || {Key,_} <- Records])).
+[]
+'''
+@see remove_bulk/3
+@see bin_remove_bulk/2
+
+
+%% __endfile__
+%% __file__ cur_jump_1.edoc
+@doc
+Calls /rpc/cur_jump<p/>
+
+Positions the cursor to the first record in the primary database.
+
+<p/>
+
+After this call, the cursor will be positioned to the <em>next</em>
+record in all subsequent calls that automatically 'step' the cursor.
+
+```
+% example:
+
+1> kterl:set_bulk(Pid,[{"key1","val1"},{"key2","val2"},{"key3","val3"}]).
+...
+2> Cursor = kterl:cursor(Pid).
+3> kterl:cur_jump(Cursor).
+ok
+4> kterl_result:get_key(kterl:cur_get_key(Cursor)).
+<<"key1">>
+'''
+@see cursor/1
+@see cur_jump/2
+@see cur_jump_back/1
+@see cur_jump_opt/2
+@see cur_jump_back/2
+@see cur_jump_back_opt/2
+
+%% __endfile__
+%% __file__ cur_get_value_3.edoc
+@doc
+Calls /rpc/cur_get_value<p/>
+
+Retrieves the value of the record located at the cursor. If step is
+true, the server will reposition the cursor to an adjacent record
+after the value is retrieved. This function can also interact with the
+server's wait/signal mechanism.
+
+@see cursor/1
+@see cur_get_value/1
+@see cur_get_value/2
+%% __endfile__
+%% __file__ cur_step_back_2.edoc
+@doc
+Calls /rpc/cur_step_back<p/>
+
+Positions the cursor to the previous record. Unlike {@link
+cur_step_back/1}, this function accepts optional 'wait', 'waittime',
+'signal', and 'signalbroad' parameters to interact with the server's
+signaling mechanism.
+
+```
+% example:
+
+1> kterl:set_bulk(Pid,[{"key1","val1"},{"key2","val2"},{"key3","val3"}]).
+...
+2> Cursor = kterl:cursor(Pid).
+3> ok = kterl:cur_jump(Cursor,[{key, "key2"}]).
+ok
+4> kterl_result:get_key(kterl:cur_get_key(Cursor)).
+<<"key2">>
+5> {ok,_} = kterl:cur_step_back(Cursor,[{signal, "stepped"}]).
+{ok, ...}
+6> kterl_result:get_key(kterl:cur_get_key(Cursor)).
+<<"key1">>
+7> kterl:cur_step_back(Cursor, [{signal, "stepped"}]).
+{error,invalid_cursor}
+'''
+
+@see cursor/1
+@see cur_step/1
+@see cur_step/2
+@see cur_step_back/1
+
+%% __endfile__
+%% __file__ cur_jump_back_2.edoc
+@doc 
+Calls /rpc/cur_jump_back<p/>
+
+Positions the record in a database. This function accepts two optional
+parameters: 'key' and 'database'. If 'key' is set, the cursor will be
+positioned at that key; otherwise, it'll position the cursor to the
+last record of a database. The 'database' parameter specifies the
+target database. If it's not set, the server defaults to the primary
+database.
+
+<p/>
+
+After this call, the cursor will be positioned to the
+<em>previous</em> record in all subsequent calls that automatically
+'step' the cursor.
+
+<p/>
+
+To simplify the return status interface, this function does not
+support the 'wait', 'waittime', 'signal', and 'signalbroad'
+parameters. For these, use {@link cur_jump_back_opt/2}.
+
+```
+% example:
+
+1> kterl:set_bulk(Pid,[{"key1","val1"},{"key2","val2"},{"key3","val3"}]).
+...
+2> Cursor = kterl:cursor(Pid).
+3> ok = kterl:cur_jump_back(Cursor,[{key, "key2"}]).
+ok
+4> kterl_result:get_key(kterl:cur_get_key(Cursor)).
+<<"key2">>
+5> kterl:cur_jump_back(Cursor).
+ok
+6> kterl_result:get_key(kterl:cur_get_key(Cursor)).
+<<"key3">>
+'''
+@see cursor/1
+@see cur_jump/1
+@see cur_jump/2
+@see cur_jump_opt/2
+@see cur_jump_back/1
+@see cur_jump_back_opt/2
+
+%% __endfile__
+%% __file__ match_regex_2.edoc
+@doc
+Calls /rpc/match_regex<p/>
+
+Retrieves all keys from the primary database that match a regular
+expression. An empty regex parameter returns all keys in a
+database. If the number of key results need to be restricted, use
+{@link match_regex/3} with the 'max' parameter.
+
+```
+% example:
+
+1> Records = [{K ++ integer_to_list(V), V} || K <- ["key_a", "key_b", "key_c"] || V <- [1,2,3,4]].
+...
+2> {ok, SetRes} = kterl:set_bulk(Pid, Recs).
+...
+3> kterl_result:get_num(SetRes).
+12
+4> kterl_result:get_keys(kterl:match_regex(Pid, "key_.4")).
+[<<"key_a4">>,<<"key_b4">>,<<"key_c4">>]
+5> kterl_results:get_keys(kterl:match_regex(Pid, "key_[a|c]4")).
+[<<"key_a4">>,<<"key_c4">>]
+6> kterl_result:get_keys(kterl:match_regex(Pid, "")).
+[<<"key_a1">>,<<"key_a2">>,<<"key_a3">>,<<"key_a4">>,
+ <<"key_b1">>,<<"key_b2">>,<<"key_b3">>,<<"key_b4">>,
+ <<"key_c1">>,<<"key_c2">>,<<"key_c3">>,<<"key_c4">>]
+'''
+@see match_regex/3
+%% __endfile__
+%% __file__ cur_get_3.edoc
+@doc
+Calls /rpc/cur_get<p/>
+
+Retrieves the key and value, and if set, the expiration time of the
+record located at the cursor. If step is true, the server will
+reposition the cursor to an adjacent record after the key and value
+are retrieved. This function cal also interact with the server's
+wait/signal mechanism.
+
+@see cursor/1
+@see cur_get/1
+@see cur_get/2
+%% __endfile__
+%% __file__ append_3.edoc
+@doc 
+Calls /rpc/append<p/>
+
+Appends a value to a record. The record is created if it doesn't exist.
+
+```
+% example:
+
+1> ok = kterl:set(Pid, "key", "this is").
+ok
+2> {ok, Res} = kterl:get(Pid, "key").
+...
+3> kterl_result:get_value(Res).
+<<"this is">>
+4> ok = kterl:append(Pid, "key", " a test.").
+ok
+5> kterl_result:get_value(kterl:get(Pid, "key"))
+<<"this is a test">>
+'''
+@see append/4
+
+
+%% __endfile__
+%% __file__ cur_set_value_2.edoc
+@doc 
+Calls /rpc/cur_set_value<p/>
+
+Sets the value of the record located at the cursor. This function does
+not instruct the server to 'step' the cursor to the next/previous
+record after writing a new value. For this, use {@link
+cur_set_value/3} or {@link cur_set_value_opt/2}.
+
+```
+% example:
+
+1> kterl:set_bulk(Pid,[{"key1","val1"},{"key2","val2"},{"key3","val3"}]).
+...
+2> Cursor = kterl:cursor(Pid).
+...
+3> ok = kterl:cur_jump(Cursor, [{key, "key2"}]).
+ok
+4> kterl_result:get_value(kterl:cur_get_value(Cursor)).
+<<"val2">>
+5> ok = kterl:cur_set_value(Cursor, <<"new val2">>).
+ok
+6> kterl_result:get_value(kterl:cur_get_value(Cursor)).
+<<"new val2">>
+'''
+@see cursor/1
+@see cur_set_value/2
+@see cur_set_value_opt/2
+
+
+%% __endfile__
+%% __file__ cur_get_key_2.edoc
+@doc
+Calls /rpc/cur_get_key<p/>
+
+Retrieves the key of the record located at the cursor. If 'step' is
+set to true, the server will reposition the cursor to an adjacent
+record after the key is retrieved.
+
+```
+% example:
+
+1> kterl:set_bulk(Pid,[{"key1","val1"},{"key2","val2"},{"key3","val3"}]).
+...
+2> Cursor = kterl:cursor(Pid).
+...
+3> ok = kterl:cur_jump(Cursor).
+ok
+4> {ok, Res} = kterl:cur_get_key(Cursor, true).
+{ok, ...}
+5> kterl_result:get_key(Res).
+<<"key1">>
+6> kterl_result:get_key(kterl:cur_get_key(Cursor, true)).
+<<"key2">>
+6> ok = kterl:cur_jump_back(Cursor).
+ok
+7> kterl_result:get_key(kterl:cur_get_key(Cursor, true)).
+<<"key3">>
+8> kterl_result:get_key(kterl:cur_get_key(Cursor, true)).
+<<"key2">>
+9> kterl_result:get_key(kterl:cur_get_key(Cursor, true)).
+<<"key1">>
+10> kterl_result:get_key(kterl:cur_get_key(Cursor, true)).
+{error,invalid_cursor}
+'''
+@see cursor/1
+@see cur_get_key/1
+@see cur_get_key/3
+
+%% __endfile__
+%% __file__ clear_1.edoc
+@doc Calls /rpc/clear<p/>
+Removes all records from the primary database.
+```
+% example:
+
+clear_kt_database(Pid) ->
+    ok = kterl:clear(Pid).
+'''
+@see clear/2
+
+
+%% __endfile__
+%% __file__ cur_jump_back_1.edoc
+@doc
+Calls /rpc/cur_jump_back<p/>
+
+Positions the cursor to the last record in the primary database.
+
+<p/>
+
+After this call, the cursor will be positioned to the
+<em>previous</em> record in all subsequent calls that automatically
+'step' the cursor.
+
+```
+% example:
+
+1> kterl:set_bulk(Pid,[{"key1","val1"},{"key2","val2"},{"key3","val3"}]).
+...
+2> Cursor = kterl:cursor(Pid).
+3> kterl:cur_jump_back(Cursor).
+ok
+4> kterl_result:get_key(kterl:cur_get_key(Cursor)).
+<<"key3">>
+'''
+
+@see cursor/1
+@see cur_jump/1
+@see cur_jump/2
+@see cur_jump_opt/2
+@see cur_jump_back/2
+@see cur_jump_back_opt/2
+
+%% __endfile__
+%% __file__ cur_get_value_2.edoc
+@doc
+Calls /rpc/cur_get_value<p/>
+
+Retrieves the value of the record located at the cursor. If 'step' is true,
+the server will reposition the cursor to an adjacent record after the value
+is retrieved.
+
+``` 
+% example:
+
+1> kterl:set_bulk(Pid, [{"key1","val1"}, {"key2","val2"}]).
+...
+2> Cursor = kterl:cursor(Pid).
+...
+3> ok = kterl:cur_jump(Cursor).
+ok
+4> {ok, Res} = kterl:cur_get_value(Cursor, true).
+{ok, ...}
+5> kterl_result:get_value(Res).
+<<"val1">>
+6> kterl_result:get_value(kterl:cur_get_value(Cursor, true)).
+<<"val2">>
+7> kterl_result:get_value(kterl:cur_get_value(Cursor, true)).
+{error,invalid_cursor}
+'''
+
+@see cursor/1
+@see cur_get_value/1
+@see cur_get_value/3
+
+%% __endfile__
+%% __file__ status_2.edoc
+@doc Calls /rpc/status<br/>
+Receives miscellaneous status information of a specified database
+```
+% example:
+
+1> kterl_result:get_records(kterl:status(Pid), "test.kct")).
+[{<<"apow">>,<<"8">>},
+ {<<"bnum">>,<<"65536">>},
+ {<<"chksum">>,<<"188">>},
+ {<<"count">>,<<"8">>},
+ {<<"cusage">>,<<"237">>},
+ {<<"dfunit">>,<<"0">>},
+ ... ]
+'''
+@see status/1
+
+%% __endfile__
+%% __file__ cas_3.edoc
+@doc 
+Calls /rpc/cas<p/>
+Depending on the parameters, this function can perform an atomic value
+compare-and-swap, a record add, or an atomic record compare-and-remove
+operation.
+<p/>
+The functionality is controlled by two optional proplists parameters:
+<code>'oval'</code>, for the record's old value, and <code>'nval'</code> 
+for the new. If <code>'oval'</code> is omitted, a new record is added with 
+<code>'nval'</code> as the value. If <code>'nval'</code> is omitted, but 
+<code>'oval'</code> matches the existing record's value, the
+record is removed. 
+
+```
+1> kterl_result:get_value(kterl:get(Pid, "cas_test")).
+{error,no_record}
+2> {ok,_} = kterl:cas(Pid,"cas_test",[{nval,"testing"}]).
+...
+3> kterl_result:get_value(kterl:get(Pid, "cas_test")).
+<<"testing">>
+4> kterl:cas(Pid,"cas_test",[{nval,"new value"}]).
+{error,expired_value}
+5> {ok,_} = kterl:cas(Pid,"cas_test",[{oval,"testing"}, {nval,"1,2,3"}]).
+...
+6> kterl_result:get_value(kterl:get(Pid, "cas_test")).
+<<"1,2,3">>
+7> kterl:cas(Pid,"cas_test",[{oval,"bogus value"}]).
+{error,expired_value}
+8> {ok,_} = kterl:cas(Pid,"cas_test",[{oval,"1,2,3"}]).
+...
+9> kterl:get(Pid,"cas_test").
+{error,no_record}
+'''
+=== example ===
+```
+%%% updates the user's age in the users.kct database's user record.
+update_user_age(Pid, User0 = #user{name = Username}, Age) ->
+    User1 = User0#user{age = Age},
+    case kterl:cas(Pid, Username, 
+                   [{database, "users.kct"},
+                    {oval, user_record(User0)},
+                    {nval, user_record(User1)}]) of
+        {ok,_} -> ok;
+        Err = {error,expired_value} -> throw(Err)
+    end.
+
+user_record(User = #user{}) -> term_to_binary(User, [compressed]).
+'''   
+@see cas/4
+
+%% __endfile__
+%% __file__ play_script_2.edoc
+@doc Calls /rpc/play_script<p/>
+Invokes a procedure of the server's script language extension.
+```
+% example:
+
+play_kt_script(Pid, Script) ->
+    {ok, Res} = kterl:play_script(Pid, Script),
+    kterl_result:get_records(Res).
+
+1> play_kt_script(Pid, <<"script_name">>).
+[{<<"result_1_key">>,<<"result_1_value">>}},
+ {<<"result_2_key">>,<<"result_2_value">>}]
+'''
+@see play_script/3
+@see play_script/4
+@see bin_play_script/3
+
+%% __endfile__
+%% __file__ cur_get_key_1.edoc
+@doc
+Calls /rpc/cur_get_key<p/>
+
+Retrieves the key of the record located at the cursor. This function
+does not instruct the server to 'step' the cursor to the next/previous
+record after the call. For this, use {@link cur_get_key/2} or {@link
+cur_get_key/3}.
+
+```
+% example:
+
+1> kterl:set_bulk(Pid,[{"key1","val1"},{"key2","val2"},{"key3","val3"}]).
+...
+2> Cursor = kterl:cursor(Pid).
+...
+3> ok = kterl:cur_jump(Cursor).
+ok
+4> {ok, Res} = kterl:cur_get_key(Cursor).
+{ok, ...}
+5> kterl_result:get_key(Res).
+<<"key1">>
+6> ok = kterl:cur_step(Cursor).
+ok
+7> kterl_result:get_key(kterl:cur_get_key(Cursor)).
+<<"key2">>
+'''
+
+@see cursor/1
+@see cur_get_key/2
+
+%% __endfile__
+%% __file__ cur_jump_opt_2.edoc
+@doc 
+Calls /rpc/cur_jump<p/>
+
+Positions the cursor in a database. Like {@link cur_jump/2}, this
+function accepts the optional 'key' and 'database' parameters. In
+addition to these, this function accepts 'wait', 'waittime', 'signal',
+and 'signalbroad' parameters, to interact with the signaling
+mechanisms on the server.
+
+<p/>
+
+After this call, the cursor will be positioned to the <em>next</em>
+record in all subsequent calls that automatically 'step' the cursor.
+
+
+@see cur_jump/1
+@see cur_jump/2
+@see cur_jump_back/1
+@see cur_jump_back/2
+@see cur_jump_back_opt/2
+%% __endfile__
+%% __file__ add_4.edoc
+@doc Calls /rpc/add<br/>
+
+Adds a new record to a specified database. This is the function to
+call to set an expiration time, signal/wait parameters, or to specify
+which database the record will be added to.
+
+```
+% example: waits for an "goahead" signal for 30 seconds, and then adds
+% a new record to the primary database. The call fails if it doesn't receive
+% the signal within the waittime setting.
+
+add_status_record(Pid, Key, Value) ->
+    case kterl:add(Pid, Key, Value, [{wait, "goahead"}, {waittime, 30}]) of
+        {ok, _} -> 
+            ok;
+        {error, Why} when Why =:= duplicate_key; Why =:= timed_out ->
+            throw({error, {add_status, Why, Key}})
+end.
+'''
+@see add/2
+@see add/3
+
+%% __endfile__
+%% __file__ release_cursor_1.edoc
+@doc
+Release the cursor by invoking /rpc/cur_delete.<p/> 
+
+The documentation states this will delete the cursor implicitly. As of
+kyoto tycoon 0.9.53, calling /rpc/cur_delete will invalidate the
+cursor until a jump call is performed.
+
+@see cursor/1
+%% __endfile__

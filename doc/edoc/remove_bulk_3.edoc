@@ -1,0 +1,34 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc
+
+Calls /rpc/remove_bulk<p/>
+
+Removes multiple records at once, returning the numbers of records
+stored. Optionally, the database and/or signal operations, and an
+option to force atomicity can be specified. {@link bin_remove_bulk/2} is
+significantly faster than this call, but it lacks the ability to
+configure signal operations, atomicity, or specify the destination
+database as a string.
+
+```
+% example: This function attempts to remove records from the "status.kct"
+% database. It returns the number of records removed.
+
+remove_status_record(Pid) ->
+    Keys = ["status_" ++ integer_to_list(N) || N <- lists:seq(1,1000)],
+    case kterl:remove_bulk(Pid, Keys, [{database, "status.kct"}]) of
+        {ok, Res} ->
+            {ok, kterl_result:get_num(Res)};
+        Error = {error, _} ->
+            Error
+end.
+'''
+
+<p/>On success remove_bulk/3 will return <code>{ok, Result}</code>. The <code>Result</code> can then be passed to the following function(s) to access:<p/>```
+kterl_result:get_num(Result).             % The result from an increment call, or a record count.
+kterl_result:get_signaled_count(Result).  % The number of clients signaled (if 'signal' was passed to the call.)
+
+'''
+@see remove_bulk/2
+@see bin_remove_bulk/2
+    

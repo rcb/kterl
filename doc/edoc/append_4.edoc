@@ -1,0 +1,26 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc 
+Calls /rpc/append<p/>
+
+Appends a value to a record. The record is created if it doesn't exist.
+
+```
+% example: This appends a tag to a user's set of tags, and then sends a 
+% "username_tag" signal to any processes waiting for that signal.
+% It returns {ok, N} where N is the number of clients that received the
+% signal.
+
+update_user_tags(Pid, Username, Tag) ->
+    {ok,Res} = kterl:append(Pid, Username, [$| | Tag],
+                            [{database, "tags.kct"},
+                             {signal, Username ++ "_" ++ Tag},
+                             {signalbroad, true}]),
+    {ok, kterl_result:get_signal_count(Res)}.
+'''
+<p/>On success append/4 will return <code>{ok, Result}</code>. The <code>Result</code> can then be passed to the following function(s) to access:<p/>```
+kterl_result:get_signaled_count(Result).  % The number of clients signaled (if 'signal' was passed to the call.)
+
+'''
+@see append/3
+
+

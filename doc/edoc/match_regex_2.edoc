@@ -1,0 +1,32 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc
+Calls /rpc/match_regex<p/>
+
+Retrieves all keys from the primary database that match a regular
+expression. An empty regex parameter returns all keys in a
+database. If the number of key results need to be restricted, use
+{@link match_regex/3} with the 'max' parameter.
+
+```
+% example:
+
+1> Records = [{K ++ integer_to_list(V), V} || K <- ["key_a", "key_b", "key_c"] || V <- [1,2,3,4]].
+...
+2> {ok, SetRes} = kterl:set_bulk(Pid, Recs).
+...
+3> kterl_result:get_num(SetRes).
+12
+4> kterl_result:get_keys(kterl:match_regex(Pid, "key_.4")).
+[<<"key_a4">>,<<"key_b4">>,<<"key_c4">>]
+5> kterl_results:get_keys(kterl:match_regex(Pid, "key_[a|c]4")).
+[<<"key_a4">>,<<"key_c4">>]
+6> kterl_result:get_keys(kterl:match_regex(Pid, "")).
+[<<"key_a1">>,<<"key_a2">>,<<"key_a3">>,<<"key_a4">>,
+ <<"key_b1">>,<<"key_b2">>,<<"key_b3">>,<<"key_b4">>,
+ <<"key_c1">>,<<"key_c2">>,<<"key_c3">>,<<"key_c4">>]
+'''
+<p/>On success match_regex/2 will return <code>{ok, Result}</code>. The <code>Result</code> can then be passed to the following function(s) to access:<p/>```
+kterl_result:get_keys(Result).            % All matching keys.
+
+'''
+@see match_regex/3

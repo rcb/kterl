@@ -1,0 +1,39 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc
+
+Calls /rpc/seize<p/>
+
+Retrieve and remove a record in one atomic operation, with the option
+to specify a database and/or perform signal operations. The call
+returns the record's value, and if set, the record's expiration time.
+
+```
+% example: a process in the cluster intermittently creates a status record in the status.kct
+% database, and then broadcasts a 'status_ready' signal. this function acts as a consumer. 
+% it waits for that signal, seizes the record, and then performs some processing on the 
+% record's value.
+
+get_status_record(Pid) ->
+    case kterl:seize(Pid, "sys_status", 
+                     [{database, "status.kct"},
+                      {wait,     "status_ready"},
+                      {waittime, 10}]) of
+        {ok, Res} ->
+            process_status(kterl_result:get_value(Res)),
+            get_status_record(Pid);
+        {error, timed_out} ->
+            log("Status not ready after 10 seconds"),
+            get_status_record(Pid);
+        {error, no_record} ->
+            throw({error, {get_status, no_record}})
+end.
+'''
+
+<p/>On success seize/3 will return <code>{ok, Result}</code>. The <code>Result</code> can then be passed to the following function(s) to access:<p/>```
+kterl_result:get_value(Result).           % The record's value.
+kterl_result:get_exptime(Result).         % The record's expiration time (if set.)
+kterl_result:get_signaled_count(Result).  % The number of clients signaled (if 'signal' was passed to the call.)
+
+'''
+@see seize/2
+

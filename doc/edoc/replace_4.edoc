@@ -1,0 +1,29 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc Calls /rpc/replace<p/>
+
+Replaces the value of an existing record. Use this call to specify the
+database, to set an expiration time of the updated record, or to
+configure signal/wait parameters.
+
+```
+% example: this updates a record in the "system.kct" database with
+% an expiration time of one hour.
+
+update_system_record(Pid, SystemKey, SystemRecord) ->
+    case kterl:replace(Pid, SystemKey, SystemRecord,
+                       [{database, "system.kct"}, 
+                        {xt, 60 * 60}]) of
+        ok -> ok;
+        {error, no_record} -> throw({error, {no_sys_record, SystemKey}})
+    end.
+'''
+        
+<p/>On success replace/4 will return <code>{ok, Result}</code>. The <code>Result</code> can then be passed to the following function(s) to access:<p/>```
+kterl_result:get_signaled_count(Result).  % The number of clients signaled (if 'signal' was passed to the call.)
+
+'''
+@see replace/2
+@see replace/4
+@see cas/4
+@see cas/3
+

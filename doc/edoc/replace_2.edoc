@@ -1,0 +1,32 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc Calls /rpc/replace<p/>
+
+Replaces the value of an existing record in the primary database.
+
+```
+% example:
+
+1> Record1 = {<<"key">>, <<"value">>}.
+2> Record2 = {<<"key">>, <<"new value">>}.
+
+3> ok = kterl:set(Pid, Record1).
+ok
+4> {ok, Res} = kterl:get(Pid <<"key">>).
+...
+5> kterl_result:get_value(Res).
+<<"value">>
+6> ok = kterl:replace(Pid, Record2).
+ok
+7> {ok, Res1} = kterl:get(Pid, <<"key">>).
+...
+8> kterl_result:get_value(Res).
+<<"new value">>
+9> kterl_replace(Pid, {"new_record","new_value"}).
+{error,no_record}
+'''
+<p/>On success replace/2 returns <code>'ok'</code>.<p/>
+@see replace/3
+@see replace/4
+@see cas/4
+@see cas/3
+

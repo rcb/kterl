@@ -1,0 +1,38 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc
+Calls /rpc/remove<p/>
+
+Removes a record, with the option to specify a database and/or perform signal operations.
+
+```
+% contrived example: add a record to the stats database with a 10 second
+% expiration time. on success, send a signal that it was added. wait an
+% hour for another process to collect that record, and then remove it.
+
+write_status(Pid, Stats) ->
+    {ok, Res} = kterl:set(Pid, "stats_1234", Stats, 
+                          [{database, "stats.kct"},
+                           {xt,       10}, 
+                           {signal,   "stats_ready"}]),
+
+    %% ensure the signal was collected
+    true = kterl_result:get_signaled_count(Res) > 0,
+
+    case kterl:remove(Pid, "stats_1234",
+                      [{database, "stats.kct"},
+                       {wait,     "stats_collected"},
+                       {waittime, 60 * 60}]) of
+        {ok, _} -> 
+            ok;
+        {error, Res} when Res =:= timed_out; Res =:= no_record ->
+            throw({error, {dump_status, Err}})
+    end.
+'''
+<p/>On success remove/3 will return <code>{ok, Result}</code>. The <code>Result</code> can then be passed to the following function(s) to access:<p/>```
+kterl_result:get_signaled_count(Result).  % The number of clients signaled (if 'signal' was passed to the call.)
+
+'''
+@see remove/2
+@see cas/3
+
+                         

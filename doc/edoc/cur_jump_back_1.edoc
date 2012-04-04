@@ -1,0 +1,32 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc
+Calls /rpc/cur_jump_back<p/>
+
+Positions the cursor to the last record in the primary database.
+
+<p/>
+
+After this call, the cursor will be positioned to the
+<em>previous</em> record in all subsequent calls that automatically
+'step' the cursor.
+
+```
+% example:
+
+1> kterl:set_bulk(Pid,[{"key1","val1"},{"key2","val2"},{"key3","val3"}]).
+...
+2> Cursor = kterl:cursor(Pid).
+3> kterl:cur_jump_back(Cursor).
+ok
+4> kterl_result:get_key(kterl:cur_get_key(Cursor)).
+<<"key3">>
+'''
+
+<p/>On success cur_jump_back/1 returns <code>'ok'</code>.<p/>
+@see cursor/1
+@see cur_jump/1
+@see cur_jump/2
+@see cur_jump_opt/2
+@see cur_jump_back/2
+@see cur_jump_back_opt/2
+

@@ -1,0 +1,11 @@
+.eunit
+ebin/*
+doc/*.css
+doc/*.html
+doc/*.png
+doc/edoc-info
+.eunit
+.kterl_dialyzer.plt
+fprof.trace
+erl_crash.dump
+

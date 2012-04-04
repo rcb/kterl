@@ -1,0 +1,44 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc
+Calls /rpc/cur_jump<p/>
+
+Positions the record in a database. This function accepts two optional
+parameters: 'key' and 'database'. If 'key' is set, the cursor will be
+positioned at that key; otherwise, it'll position the cursor to the
+first record of a database. The 'database' parameter specifies the
+target database. If it's not set, the server defaults to the primary
+database.
+
+<p/>
+
+After this call, the cursor will be positioned to the <em>next</em>
+record in all subsequent calls that automatically 'step' the cursor.
+
+<p/>
+
+To simplify the return status interface, this function does not
+support the 'wait', 'waittime', 'signal', or 'signalbroad'
+parameters. For these, use {@link cur_jump_opt/2}.
+
+```
+% example:
+
+1> kterl:set_bulk(Pid,[{"key1","val1"},{"key2","val2"},{"key3","val3"}]).
+...
+2> Cursor = kterl:cursor(Pid).
+3> kterl:cur_jump(Cursor,[{key, "key3"}]).
+ok
+4> kterl_result:get_key(kterl:cur_get_key(Cursor)).
+<<"key3">>
+5> kterl:cur_jump(Cursor).
+6> kterl_result:get_key(kterl:cur_get_key(Cursor)).
+<<"key1">>
+'''
+<p/>On success cur_jump/2 returns <code>'ok'</code>.<p/>
+@see cursor/1
+@see cur_jump/1
+@see cur_jump_back/1
+@see cur_jump_back/2
+@see cur_jump_opt/2
+@see cur_jump_back_opt/2
+

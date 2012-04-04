@@ -1,0 +1,35 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc
+Calls /rpc/cur_get_key<p/>
+
+Retrieves the key of the record located at the cursor. This function
+does not instruct the server to 'step' the cursor to the next/previous
+record after the call. For this, use {@link cur_get_key/2} or {@link
+cur_get_key/3}.
+
+```
+% example:
+
+1> kterl:set_bulk(Pid,[{"key1","val1"},{"key2","val2"},{"key3","val3"}]).
+...
+2> Cursor = kterl:cursor(Pid).
+...
+3> ok = kterl:cur_jump(Cursor).
+ok
+4> {ok, Res} = kterl:cur_get_key(Cursor).
+{ok, ...}
+5> kterl_result:get_key(Res).
+<<"key1">>
+6> ok = kterl:cur_step(Cursor).
+ok
+7> kterl_result:get_key(kterl:cur_get_key(Cursor)).
+<<"key2">>
+'''
+
+<p/>On success cur_get_key/1 will return <code>{ok, Result}</code>. The <code>Result</code> can then be passed to the following function(s) to access:<p/>```
+kterl_result:get_key(Result).             % The record's key.
+
+'''
+@see cursor/1
+@see cur_get_key/2
+

@@ -1,0 +1,23 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc Calls /rpc/play_script<p/>
+Invokes a procedure of the server's script language extension.
+```
+% example:
+
+play_kt_script(Pid, Script) ->
+    {ok, Res} = kterl:play_script(Pid, Script),
+    kterl_result:get_records(Res).
+
+1> play_kt_script(Pid, <<"script_name">>).
+[{<<"result_1_key">>,<<"result_1_value">>}},
+ {<<"result_2_key">>,<<"result_2_value">>}]
+'''
+<p/>On success play_script/2 will return <code>{ok, Result}</code>. The <code>Result</code> can then be passed to the following function(s) to access:<p/>```
+kterl_result:get_records(Result).         % All records.
+kterl_result:get_num(Result).             % The result from an increment call, or a record count.
+
+'''
+@see play_script/3
+@see play_script/4
+@see bin_play_script/3
+

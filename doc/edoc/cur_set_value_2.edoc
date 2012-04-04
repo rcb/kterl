@@ -1,0 +1,31 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc 
+Calls /rpc/cur_set_value<p/>
+
+Sets the value of the record located at the cursor. This function does
+not instruct the server to 'step' the cursor to the next/previous
+record after writing a new value. For this, use {@link
+cur_set_value/3} or {@link cur_set_value_opt/2}.
+
+```
+% example:
+
+1> kterl:set_bulk(Pid,[{"key1","val1"},{"key2","val2"},{"key3","val3"}]).
+...
+2> Cursor = kterl:cursor(Pid).
+...
+3> ok = kterl:cur_jump(Cursor, [{key, "key2"}]).
+ok
+4> kterl_result:get_value(kterl:cur_get_value(Cursor)).
+<<"val2">>
+5> ok = kterl:cur_set_value(Cursor, <<"new val2">>).
+ok
+6> kterl_result:get_value(kterl:cur_get_value(Cursor)).
+<<"new val2">>
+'''
+<p/>On success cur_set_value/2 returns <code>'ok'</code>.<p/>
+@see cursor/1
+@see cur_set_value/2
+@see cur_set_value_opt/2
+
+

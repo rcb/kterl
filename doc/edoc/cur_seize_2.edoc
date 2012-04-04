@@ -1,0 +1,18 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc
+Calls /rpc/cur_seize<p/>
+
+Returns the key, value, and if set, the expiration time of the record
+located at the cursor. The record is then removed. If the last (or
+first, depending on cur_jump/cur_jump_back step order) record is
+removed or seized, the cursor is invalidated for future operations
+until it's repositioned with a jump call.
+
+<p/>On success cur_seize/2 will return <code>{ok, Result}</code>. The <code>Result</code> can then be passed to the following function(s) to access:<p/>```
+kterl_result:get_key(Result).             % The record's key.
+kterl_result:get_value(Result).           % The record's value.
+kterl_result:get_exptime(Result).         % The record's expiration time (if set.)
+
+'''
+@see cursor/1
+@see cur_seize/1

@@ -1,0 +1,36 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc
+Calls /rpc/cur_step_back<p/>
+
+Positions the cursor to the previous record. Unlike {@link
+cur_step_back/1}, this function accepts optional 'wait', 'waittime',
+'signal', and 'signalbroad' parameters to interact with the server's
+signaling mechanism.
+
+```
+% example:
+
+1> kterl:set_bulk(Pid,[{"key1","val1"},{"key2","val2"},{"key3","val3"}]).
+...
+2> Cursor = kterl:cursor(Pid).
+3> ok = kterl:cur_jump(Cursor,[{key, "key2"}]).
+ok
+4> kterl_result:get_key(kterl:cur_get_key(Cursor)).
+<<"key2">>
+5> {ok,_} = kterl:cur_step_back(Cursor,[{signal, "stepped"}]).
+{ok, ...}
+6> kterl_result:get_key(kterl:cur_get_key(Cursor)).
+<<"key1">>
+7> kterl:cur_step_back(Cursor, [{signal, "stepped"}]).
+{error,invalid_cursor}
+'''
+
+<p/>On success cur_step_back/2 will return <code>{ok, Result}</code>. The <code>Result</code> can then be passed to the following function(s) to access:<p/>```
+kterl_result:get_signaled_count(Result).  % The number of clients signaled (if 'signal' was passed to the call.)
+
+'''
+@see cursor/1
+@see cur_step/1
+@see cur_step/2
+@see cur_step_back/1
+

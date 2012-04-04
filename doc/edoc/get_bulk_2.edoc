@@ -1,0 +1,27 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc
+
+Calls /rpc/get_bulk<p/>
+
+Retrieves multiple records at once. {@link bin_get_bulk/2} is significantly faster than this call.
+
+```
+% example:
+
+1> Records = [{"key1","val1"}, {<<"key2">>, <<"val2">>}, {"key3", 1234}, {"key4",1.23}].
+...
+2> {ok, _} = kterl:set_bulk(Pid, Records).
+...
+3> kterl_result:get_records(kterl:get_bulk(Pid, ["missing_key" | [Key || {Key,_} <- Records]])).
+[{<<"key1">>,<<"val1">>},
+ {<<"key2">>,<<"val2">>},
+ {<<"key3">>,<<"1234">>},
+ {<<"key4">>,<<"1.230000">>}]
+'''
+<p/>On success get_bulk/2 will return <code>{ok, Result}</code>. The <code>Result</code> can then be passed to the following function(s) to access:<p/>```
+kterl_result:get_records(Result).         % All records.
+
+'''
+@see get_bulk/3
+@see bin_get_bulk/2
+

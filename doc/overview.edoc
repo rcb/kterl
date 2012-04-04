@@ -1,0 +1,19 @@
+@author Rich Beerman <rbeer@beerman.org>
+@copyright 2012 Rich Beerman
+@version 1.0.0
+@reference <a href="fallabs.com/kyototycoon">Kyoto Tycoon</a>
+@reference <a href="https://github.com/wooga/eredis">eredis</a>
+@title kterl: an Erlang interface to the Kyoto Tycoon cache/storage server.
+@doc 
+
+== Introduction ==
+
+kterl is an easy to use, robust, OTP-compliant, non-blocking HTTP and
+binary protocol interface to the <a
+href="fallabs.com/kyototycoon">Kyoto Tycoon</a> cache/storage server.
+
+<p/>The connection handler was inspired by the excellent
+<a href="https://github.com/wooga/eredis">eredis</a> client.
+<p/>
+
+@end

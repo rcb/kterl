@@ -1,0 +1,24 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc 
+Calls /rpc/append<p/>
+
+Appends a value to a record. The record is created if it doesn't exist.
+
+```
+% example:
+
+1> ok = kterl:set(Pid, "key", "this is").
+ok
+2> {ok, Res} = kterl:get(Pid, "key").
+...
+3> kterl_result:get_value(Res).
+<<"this is">>
+4> ok = kterl:append(Pid, "key", " a test.").
+ok
+5> kterl_result:get_value(kterl:get(Pid, "key"))
+<<"this is a test">>
+'''
+<p/>On success append/3 returns <code>'ok'</code>.<p/>
+@see append/4
+
+

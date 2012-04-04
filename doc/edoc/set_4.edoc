@@ -1,0 +1,28 @@
+%% Notice: This file is auto-generated from 'doc/skel/func_docs.skel'
+@doc
+Calls /rpc/set<p/>
+
+Sets the value of a record in a specified database, with other
+optional parameters, such as setting the destination database, an
+expiration time, setting, or waiting on a signal.  A new record is
+created if the key doesn't exist.
+
+```
+% example: creates or updates a record in the cache.kct database, with an 
+% expiration time 120 seconds in the future, and then sends the "cache" 
+% signal to all clients waiting for that signal.
+
+add_cache_item(Pid, Key, Value) ->
+     {ok, Res} = kterl:set(Pid, Key, Value, 
+                    [{database, "cache.kct"}, {xt,120},
+                     {signal, "cache"}, {signalbroad, true}]),
+     Signaled = kterl:get_signaled_count(Res),
+     {ok, Signaled}.
+'''
+<p/>On success set/4 will return <code>{ok, Result}</code>. The <code>Result</code> can then be passed to the following function(s) to access:<p/>```
+kterl_result:get_signaled_count(Result).  % The number of clients signaled (if 'signal' was passed to the call.)
+
+'''
+@see set/2
+@see set/3
+
