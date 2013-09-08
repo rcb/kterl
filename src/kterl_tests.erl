@@ -36,7 +36,9 @@ ktc(#test_state{ktc_pid = P}) -> P.
 
 connect() ->
     %Kts = spawn_link(fun() -> launch_ktserver() end),
-    {ok,C} = kterl:start_link([{host, "127.0.0.1"}, {port,?TEST_PORT}]),
+    application:start(kterl),
+    {ok,C} = kterl:connect([{host, "127.0.0.1"}, {port,?TEST_PORT}]),
+    %%{ok,C} = kterl:start_link([{host, "127.0.0.1"}, {port,?TEST_PORT}]),
     C.
 
 disconnect(C) ->
@@ -480,9 +482,10 @@ vacuum(C) ->
     [?_assertEqual(ok, ok(kterl:vacuum(C)))].
 
 concurrent_test_() ->
-    {ok,C} = kterl:start_link(),
+    %{ok,C} = kterl:start_link(),
     %kterl:configure(C,[{wire_dump,true}]),
     %Nprocs = 32000,
+	{ok,C} = kterl:connect(),
     Nprocs = 1000,
     spawn_link(fun() -> dump_monitor(C) end),
     [?_assertEqual(ok, kterl:clear(C))

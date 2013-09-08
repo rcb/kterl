@@ -23,6 +23,7 @@
 -include("ktbin.hrl").
 
 -export([start_link/0, start_link/1, start_link/3, stop/1]).
+-export([connect/0, connect/1, connect/3]).
 
 -export([void/1, echo/2, report/1, play_script/2, play_script/3,
          play_script/4, tune_replication/2, status/1, status/2,
@@ -91,7 +92,39 @@
 %% @private
 -type result_proc()    :: [{kt_http_status(), function() | term() | atom()}].
 
-%% @doc Connects to database 0 @ localhost:1978 with a 5 second connection 
+
+%% @doc Connects to port 1978 on localhost.
+%% Attaches the connection worker pid to a supervisor. Requires that the
+%% kterl application is started.
+-spec connect() -> {ok, pid()} | {error, term()}.
+connect() ->
+    connect("127.0.0.1", 1978, 5000).
+
+%% @doc Connects to [{host, Host}, {port, Port}].
+%% Attaches the connection worker pid to a supervisor. Requires that the 
+%% kterl application is started.
+-spec connect(Args :: [{host, string()}
+                    |  {port, inet:port_number()}
+                    |  {reconnect_sleep, non_neg_integer()}]) ->
+                     {ok, pid()} | {error, term()}.
+connect(Args) ->
+    Host = proplists:get_value(host, Args, "127.0.0.1"),
+    Port = proplists:get_value(port, Args, 1978),
+    RS = proplists:get_value(reconnect_sleep, Args, 5000),
+    connect(Host, Port, RS).
+
+-spec connect(Host :: string(),
+              Port :: inet:port_number(),
+              ReconnectSleep :: non_neg_integer()) ->
+                     {ok, pid()} | {error, term()}.
+
+%% @doc Connects to Host, Port, with ReconnectSleep retry interval.
+%% Attaches the connection worker pid to a supervisor. Requires that the
+%% kterl application is started.
+connect(Host, Port, ReconnectSleep) ->
+    kterl_sup:new_connection(Host, Port, ReconnectSleep).
+
+%% @doc Connects to database @ localhost:1978 with a 5 second connection
 %% retry interval. Creates the connection handler and links to the calling process.
 -spec start_link() -> {ok, pid()} | {error, term()}.
 
@@ -102,7 +135,7 @@ start_link() ->
 %% with a connection retry interval of 'reconnect_sleep' ms.
 %% Creates the connection handler and links to calling process.
 -spec start_link(Args :: [{host, string()}
-                       |  {port, non_neg_integer()}
+                       |  {port, inet:port_number()}
                        |  {reconnect_sleep, non_neg_integer()}]) -> 
     {ok,pid()} | {error, term()}.
     

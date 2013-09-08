@@ -1,5 +1,5 @@
 DIALYZER = dialyzer
-REBAR = rebar
+REBAR = ./rebar
 
 all: app
 
@@ -17,12 +17,12 @@ eunit:
 
 build-plt:
 	@$(DIALYZER) --build_plt --output_plt .kterl_dialyzer.plt -I include \
-			--apps kernel stdlib sasl inets crypto public_key ssl
+			--apps erts kernel stdlib sasl inets crypto public_key ssl
 
-# -Wunderspecs
+# -Wunderspecs -Wrace_conditions
 dialyze:
 	@$(DIALYZER) --src src --verbose --plt .kterl_dialyzer.plt -I include \
-			-Werror_handling -Wrace_conditions -Wunmatched_returns
+			-Werror_handling -Wunmatched_returns
 
 docs:
 	priv/gen_docs.erl edoc
